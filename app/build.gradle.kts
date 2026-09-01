@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.api.dsl.LibraryExtension
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    alias(libs.plugins.agp.application)
+    alias(libs.plugins.agp.library)
     alias(libs.plugins.kotlin.plugin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
@@ -28,18 +28,14 @@ plugins {
     alias(libs.plugins.kotlinx.kover)
 }
 
+group = "dev.patrickgold.florisboard"
+
 val projectMinSdk: String by project
-val projectTargetSdk: String by project
 val projectCompileSdk: String by project
 val projectVersionCode: String by project
 val projectVersionName: String by project
-val projectVersionNameSuffix = projectVersionName.substringAfter("-", "").let { suffix ->
-    if (suffix.isNotEmpty()) {
-        "-$suffix"
-    } else {
-        suffix
-    }
-}
+
+version = projectVersionName.substringBefore("-")
 
 kotlin {
     compilerOptions {
@@ -55,7 +51,7 @@ kotlin {
     }
 }
 
-configure<ApplicationExtension> {
+configure<LibraryExtension> {
     namespace = "dev.patrickgold.florisboard"
     compileSdk = projectCompileSdk.toInt()
     buildToolsVersion = tools.versions.buildTools.get()
@@ -67,14 +63,18 @@ configure<ApplicationExtension> {
     }
 
     defaultConfig {
-        applicationId = "dev.patrickgold.florisboard"
         minSdk = projectMinSdk.toInt()
-        targetSdk = projectTargetSdk.toInt()
-        versionCode = projectVersionCode.toInt()
-        versionName = projectVersionName.substringBefore("-")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles("consumer-rules.pro")
 
+        // Library modules do not generate APPLICATION_ID / VERSION_* in BuildConfig.
+        // Keep the previous application values so existing FlorisBoard source compiles.
+        // Host package id. Clipboard authority and API 34+ IME checks must match
+        // the consuming app, not the library's historical applicationId.
+        buildConfigField("String", "APPLICATION_ID", "\"com.customkeyboard.app\"")
+        buildConfigField("String", "VERSION_NAME", "\"${projectVersionName.substringBefore("-")}\"")
+        buildConfigField("int", "VERSION_CODE", projectVersionCode)
         buildConfigField("String", "BUILD_COMMIT_HASH", "\"${getGitCommitHash().get()}\"")
         buildConfigField("String", "FLADDONS_API_VERSION", "\"v~draft2\"")
         buildConfigField("String", "FLADDONS_STORE_URL", "\"beta.addons.florisboard.org\"")
@@ -86,15 +86,6 @@ configure<ApplicationExtension> {
         }
     }
 
-    bundle {
-        language {
-            // We disable language split because FlorisBoard does not use
-            // runtime Google Play Service APIs and thus cannot dynamically
-            // request to download the language resources for a specific locale.
-            enableSplit = false
-        }
-    }
-
     buildFeatures {
         buildConfig = true
         compose = true
@@ -102,37 +93,21 @@ configure<ApplicationExtension> {
 
     buildTypes {
         named("debug") {
-            applicationIdSuffix = ".debug"
-            versionNameSuffix = "-debug+${getGitCommitHash(short = true).get()}"
-
-            isDebuggable = true
             isJniDebuggable = false
         }
 
         create("beta") {
-            applicationIdSuffix = ".beta"
-            versionNameSuffix = projectVersionNameSuffix
-
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
         }
 
         named("release") {
-            versionNameSuffix = projectVersionNameSuffix
-
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
         }
 
         create("benchmark") {
             initWith(getByName("release"))
-
-            applicationIdSuffix = ".bench"
-            versionNameSuffix = "-bench+${getGitCommitHash(short = true).get()}"
-
-            signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
         }
     }
@@ -229,11 +204,12 @@ dependencies {
 }
 
 fun getGitCommitHash(short: Boolean = false): Provider<String> {
-    if (!File(".git").exists()) {
+    if (!File(rootProject.rootDir, ".git").exists()) {
         return providers.provider { "null" }
     }
 
     val execProvider = providers.exec {
+        workingDir = rootProject.rootDir
         if (short) {
             commandLine("git", "rev-parse", "--short", "HEAD")
         } else {

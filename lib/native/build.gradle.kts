@@ -47,12 +47,14 @@ configure<LibraryExtension> {
             }
         }
 
-        ndk {
-            //abiFilters += listOf("armeabi-v7a", "arm64-v8a")
-        }
     }
 
     buildTypes {
+        getByName("debug") {
+            ndk {
+                abiFilters += "arm64-v8a"
+            }
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(

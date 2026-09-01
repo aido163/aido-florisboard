@@ -59,12 +59,12 @@ import java.lang.ref.WeakReference
 private var FlorisApplicationReference = WeakReference<FlorisApplication?>(null)
 
 @Suppress("unused")
-class FlorisApplication : Application() {
+open class FlorisApplication : Application() {
     companion object {
         init {
             try {
                 System.loadLibrary("fl_native")
-            } catch (_: Exception) {
+            } catch (_: Throwable) {
             }
         }
     }
@@ -72,6 +72,18 @@ class FlorisApplication : Application() {
     private val mainHandler by lazy { Handler(mainLooper) }
     private val scope = CoroutineScope(Dispatchers.Default)
     val preferenceStoreLoaded = MutableStateFlow(false)
+
+    /**
+     * Hosts that embed this library can skip JetPref / native / crash-handler
+     * startup in processes that are not the IME (e.g. a React Native shell).
+     */
+    open fun shouldStartFlorisRuntime(): Boolean = true
+
+    /**
+     * Hook for the host to sync RN-owned keyboard_shared_config into JetPref.
+     * Called after prefs init and from [FlorisImeService.onStartInputView].
+     */
+    open fun onImeStartInputView() {}
 
     val cacheManager = lazy { CacheManager(this) }
     val clipboardManager = lazy { ClipboardManager(this) }
@@ -86,6 +98,9 @@ class FlorisApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         FlorisApplicationReference = WeakReference(this)
+        if (!shouldStartFlorisRuntime()) {
+            return
+        }
         try {
             Flog.install(
                 context = this,
@@ -121,6 +136,7 @@ class FlorisApplication : Application() {
             )
             Log.i("PREFS", result.toString())
             preferenceStoreLoaded.value = true
+            onImeStartInputView()
         }
         extensionManager.value.init()
         clipboardManager.value.initializeForContext(this)
