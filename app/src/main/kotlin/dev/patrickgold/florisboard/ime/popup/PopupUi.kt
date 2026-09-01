@@ -16,19 +16,32 @@
 
 package dev.patrickgold.florisboard.ime.popup
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import dev.patrickgold.florisboard.ime.keyboard.Key
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,6 +53,9 @@ import org.florisboard.lib.snygg.ui.SnyggColumn
 import org.florisboard.lib.snygg.ui.SnyggIcon
 import org.florisboard.lib.snygg.ui.SnyggRow
 import org.florisboard.lib.snygg.ui.SnyggText
+import org.florisboard.lib.snygg.ui.rememberSnyggThemeQuery
+import org.florisboard.lib.snygg.value.SnyggDpSizeValue
+import org.florisboard.lib.snygg.value.SnyggStaticColorValue
 
 val GlobalStateNumPopupsShowing = MutableStateFlow(0)
 
@@ -57,31 +73,61 @@ fun PopupBaseBox(
         }
     }
 
-    SnyggBox(
-        elementName = FlorisImeUi.KeyPopupBox.elementName,
-        attributes = attributes,
-        modifier = modifier,
+    val style = rememberSnyggThemeQuery(FlorisImeUi.KeyPopupBox.elementName, attributes)
+    val background = style.background(default = Color(0xFF2A2A2A))
+    val foreground = style.foreground(default = Color.White)
+    val elevation = style.shadowElevation(default = 3.dp).coerceAtLeast(0.dp)
+    val borderWidth = when (val width = style.borderWidth) {
+        is SnyggDpSizeValue -> width.dp
+        else -> 0.dp
+    }
+    val borderColor = when (val color = style.borderColor) {
+        is SnyggStaticColorValue -> color.color
+        else -> Color.Unspecified
+    }
+    val pointerHeight = (key.visibleBounds.height * KeyPreviewPopupLayout.POINTER_RATIO).toDp()
+    val cornerRadiusPx = key.visibleBounds.height * KeyPreviewPopupLayout.CORNER_RADIUS_RATIO
+    val pointerHeightPx = key.visibleBounds.height * KeyPreviewPopupLayout.POINTER_RATIO
+    val callout = remember(cornerRadiusPx, pointerHeightPx) {
+        KeyPreviewPopupLayout.calloutShape(cornerRadiusPx, pointerHeightPx)
+    }
+
+    Box(
+        modifier = modifier
+            .shadow(elevation, callout)
+            .then(
+                if (borderWidth > 0.dp && borderColor.isSpecified) {
+                    Modifier.border(borderWidth, borderColor, callout)
+                } else {
+                    Modifier
+                },
+            )
+            .background(background, callout)
+            .clip(callout),
     ) {
-        key.label?.let { label ->
-            SnyggBox(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(key.visibleBounds.height.toDp())
-                    .align(Alignment.TopCenter),
-            ) {
-                SnyggText(
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = pointerHeight),
+        ) {
+            key.label?.let { label ->
+                Text(
                     modifier = Modifier.align(Alignment.Center),
                     text = label,
+                    color = foreground,
+                    fontSize = style.fontSize(default = 24.sp),
+                    fontWeight = style.fontWeight(default = FontWeight.Bold) ?: FontWeight.Bold,
+                    maxLines = 1,
                 )
             }
-        }
-        if (shouldIndicateExtendedPopups) {
-            SnyggIcon(
-                elementName = FlorisImeUi.KeyPopupExtendedIndicator.elementName,
-                attributes = attributes,
-                modifier = Modifier.align(Alignment.CenterEnd),
-                imageVector = Icons.Default.MoreHoriz,
-            )
+            if (shouldIndicateExtendedPopups) {
+                SnyggIcon(
+                    elementName = FlorisImeUi.KeyPopupExtendedIndicator.elementName,
+                    attributes = attributes,
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                    imageVector = Icons.Default.MoreHoriz,
+                )
+            }
         }
     }
 }

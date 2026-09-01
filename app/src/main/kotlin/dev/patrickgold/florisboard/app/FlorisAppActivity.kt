@@ -116,8 +116,7 @@ class FlorisAppActivity : ComponentActivity() {
             if (AndroidVersion.ATLEAST_API33_T &&
                 prefs.internal.notificationPermissionState.get() == NotificationPermissionState.NOT_SET
             ) {
-                // update pref value to show the setup screen again
-                prefs.internal.isImeSetUp.set(false)
+                prefs.internal.notificationPermissionState.set(NotificationPermissionState.DENIED)
             }
             AppVersionUtils.updateVersionOnInstallAndLastUse(this, prefs)
             setContent {

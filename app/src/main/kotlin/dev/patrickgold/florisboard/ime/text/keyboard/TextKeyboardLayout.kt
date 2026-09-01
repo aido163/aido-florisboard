@@ -69,6 +69,7 @@ import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.keyboard.KeyboardMode
 import dev.patrickgold.florisboard.ime.keyboard.SpaceBarMode
 import dev.patrickgold.florisboard.ime.popup.ExceptionsForKeyCodes
+import dev.patrickgold.florisboard.ime.popup.KeyPreviewPopupLayout
 import dev.patrickgold.florisboard.ime.popup.PopupUiController
 import dev.patrickgold.florisboard.ime.popup.rememberPopupUiController
 import dev.patrickgold.florisboard.ime.text.gestures.GlideTypingGesture
@@ -80,7 +81,6 @@ import dev.patrickgold.florisboard.ime.text.key.KeyVariation
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import dev.patrickgold.florisboard.ime.window.LocalWindowController
 import dev.patrickgold.florisboard.keyboardManager
-import dev.patrickgold.florisboard.lib.FlorisRect
 import dev.patrickgold.florisboard.lib.Pointer
 import dev.patrickgold.florisboard.lib.PointerMap
 import dev.patrickgold.florisboard.lib.devtools.LogTopic
@@ -248,25 +248,11 @@ fun TextKeyboardLayout(
             key1 = keyboard,
             key2 = Unit, // TODO quick'n'dirty hack
             boundsProvider = { key ->
-                val keyPopupWidth: Float
-                val keyPopupHeight: Float
-                when {
-                    configuration.isOrientationLandscape() -> {
-                        keyPopupWidth = desiredKeyHack.value.visibleBounds.width * 1.0f
-                        keyPopupHeight = desiredKeyHack.value.visibleBounds.height * 3.0f
-                    }
-                    else -> {
-                        keyPopupWidth = desiredKeyHack.value.visibleBounds.width * 1.1f
-                        keyPopupHeight = desiredKeyHack.value.visibleBounds.height * 2.5f
-                    }
-                }
-                val keyPopupDiffX = (key.visibleBounds.width - keyPopupWidth) / 2.0f
-                FlorisRect.new().apply {
-                    left = key.visibleBounds.left + keyPopupDiffX
-                    top = key.visibleBounds.bottom - keyPopupHeight
-                    right = left + keyPopupWidth
-                    bottom = top + keyPopupHeight
-                }
+                KeyPreviewPopupLayout.previewBounds(
+                    keyVisible = key.visibleBounds,
+                    templateVisible = desiredKeyHack.value.visibleBounds,
+                    landscape = configuration.isOrientationLandscape(),
+                )
             },
             isSuitableForBasicPopup = { key ->
                 if (key is TextKey) {

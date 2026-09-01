@@ -139,8 +139,10 @@ class PopupUiController(
     fun extend(key: Key, size: Size) {
         if (!isSuitableForExtendedPopup(key)) return
 
-        val baseBounds = baseRenderInfo?.bounds ?: boundsProvider(key)
-        val keyPopupDiffX = (key.visibleBounds.width - baseBounds.width) / 2.0f
+        val previewBounds = baseRenderInfo?.bounds ?: boundsProvider(key)
+        val cellWidth = previewBounds.width
+        val cellHeight = key.visibleBounds.height
+        val keyPopupDiffX = (key.visibleBounds.width - cellWidth) / 2.0f
 
         // Anchor left if keyView is in left half of keyboardView, else anchor right
         val anchorLeft = key.visibleBounds.left < size.width / 2
@@ -183,11 +185,11 @@ class PopupUiController(
                 val availableSpace = when {
                     anchorLeft -> key.visibleBounds.left + keyPopupDiffX
                     anchorRight -> size.width -
-                        (key.visibleBounds.left + keyPopupDiffX + baseBounds.width)
+                        (key.visibleBounds.left + keyPopupDiffX + cellWidth)
                     else -> 0.0f
                 }
                 while (offset > 0) {
-                    if (availableSpace >= offset * baseBounds.width) {
+                    if (availableSpace >= offset * cellWidth) {
                         break
                     } else {
                         offset -= 1
@@ -274,28 +276,24 @@ class PopupUiController(
             ))
         }
 
-        // Calculate layout params
-        val extWidth = row0count * baseBounds.width
-        val extHeight = when {
-            row1count > 0 -> baseBounds.height * 0.4f * 2.0f
-            else -> baseBounds.height * 0.4f
-        }
-        val x = ((key.visibleBounds.width - baseBounds.width) / 2.0f) + when {
-            anchorLeft -> -anchorOffset * baseBounds.width
-            anchorRight -> -extWidth + baseBounds.width + anchorOffset * baseBounds.width
+        // Calculate layout params. Cells stay key-sized; the grid sits above the key.
+        val cellBounds = FlorisRect.new(width = cellWidth, height = cellHeight)
+        val extWidth = row0count * cellWidth
+        val extHeight = if (row1count > 0) cellHeight * 2.0f else cellHeight
+        val x = ((key.visibleBounds.width - cellWidth) / 2.0f) + when {
+            anchorLeft -> -anchorOffset * cellWidth
+            anchorRight -> -extWidth + cellWidth + anchorOffset * cellWidth
             else -> 0.0f
         } + key.visibleBounds.left
-        val y = -baseBounds.height - when {
-            row1count > 0 -> (baseBounds.height * 0.4f).toInt()
-            else -> 0
-        } + key.visibleBounds.bottom
+        val gap = key.visibleBounds.height * KeyPreviewPopupLayout.GAP_RATIO
+        val y = key.visibleBounds.top - gap - extHeight
         val extBounds = FlorisRect.new(
             left = x, top = y, right = x + extWidth, bottom = y + extHeight,
         )
 
         extRenderInfo = ExtRenderInfo(
             elements = elements,
-            baseBounds = baseBounds,
+            baseBounds = cellBounds,
             bounds = extBounds,
             anchorLeft = anchorLeft,
             anchorRight = anchorRight,
@@ -329,8 +327,12 @@ class PopupUiController(
         val y = yEvent - key.visibleBounds.top
         val kX = x / baseBounds.width
 
-        // Check if out of boundary on y-axis
-        if (y < -baseBounds.height || y > 0.9f * baseBounds.height) {
+        val verticalReach = if (extRenderInfo.row1count > 0) {
+            baseBounds.height * 2.0f
+        } else {
+            baseBounds.height
+        }
+        if (y < -verticalReach || y > 0.9f * key.visibleBounds.height) {
             return false
         }
 
@@ -452,20 +454,22 @@ class PopupUiController(
             FlorisImeUi.Attr.Mode to evaluator.keyboard.mode.toString(),
             FlorisImeUi.Attr.ShiftState to evaluator.state.inputShiftState.toString(),
         )
-        baseRenderInfo?.let { renderInfo ->
-            PopupBaseBox(
-                modifier = Modifier
-                    .requiredSize(renderInfo.bounds.size.toDpSize())
-                    .absoluteOffset { renderInfo.bounds.topLeft.toIntOffset() },
-                attributes = attributes,
-                key = renderInfo.key,
-                shouldIndicateExtendedPopups = renderInfo.shouldIndicateExtendedPopups && extRenderInfo == null,
-            )
+        if (extRenderInfo == null) {
+            baseRenderInfo?.let { renderInfo ->
+                PopupBaseBox(
+                    modifier = Modifier
+                        .requiredSize(renderInfo.bounds.size.toDpSize())
+                        .absoluteOffset { renderInfo.bounds.topLeft.toIntOffset() },
+                    attributes = attributes,
+                    key = renderInfo.key,
+                    shouldIndicateExtendedPopups = renderInfo.shouldIndicateExtendedPopups,
+                )
+            }
         }
         extRenderInfo?.let { renderInfo ->
             val baseBounds = renderInfo.baseBounds
             val elemWidth = baseBounds.width
-            val elemHeight = baseBounds.height * 0.4f
+            val elemHeight = baseBounds.height
             PopupExtBox(
                 modifier = Modifier
                     .requiredSize(renderInfo.bounds.size.toDpSize())

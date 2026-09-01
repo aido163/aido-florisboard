@@ -133,10 +133,11 @@
   "key-popup-box": {
     "background": "var(--popup-surface)",
     "foreground": "var(--on-surface)",
-    "font-size": "22sp",
+    "font-size": "26sp",
     "font-weight": "bold",
-    "shape": "var(--shape)",
-    "shadow-elevation": "2dp"
+    "border-color": "#4A4A4A",
+    "border-width": "1dp",
+    "shadow-elevation": "4dp"
   },
   "key-popup-element:focus": {
     "background": "var(--focused-popup-surface)",
