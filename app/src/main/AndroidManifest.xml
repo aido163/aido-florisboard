@@ -43,7 +43,8 @@
             android:label="@string/floris_app_name"
             android:permission="android.permission.BIND_INPUT_METHOD"
             android:directBootAware="true"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/FlorisImeTheme">
             <intent-filter>
                 <action android:name="android.view.InputMethod"/>
             </intent-filter>

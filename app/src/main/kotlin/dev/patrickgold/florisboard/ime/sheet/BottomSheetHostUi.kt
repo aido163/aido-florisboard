@@ -24,13 +24,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import org.florisboard.lib.compose.conditional
 
 private val SheetOutOfBoundsBgColorInactive = Color(0x00000000)
 private val SheetOutOfBoundsBgColorActive = Color(0x52000000)
@@ -47,19 +47,30 @@ fun BottomSheetHostUi(
     val bgColorOutOfBounds by animateColorAsState(
         if (isShowing) SheetOutOfBoundsBgColorActive else SheetOutOfBoundsBgColorInactive
     )
-    Column(Modifier.background(bgColorOutOfBounds)) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .conditional(isShowing) {
-                    pointerInput(Unit) {
+    // A full-screen Column with even a 0-alpha background can composite as an opaque black
+    // slab over the host app on some devices (Samsung + hardware layers). Only size the
+    // overlay while a sheet is actually showing.
+    Column(
+        modifier = if (isShowing) {
+            Modifier
+                .fillMaxSize()
+                .background(bgColorOutOfBounds)
+        } else {
+            Modifier
+        },
+    ) {
+        if (isShowing) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .pointerInput(Unit) {
                         detectTapGestures {
                             onHide()
                         }
-                    }
-                },
-        )
+                    },
+            )
+        }
         AnimatedVisibility(
             visible = isShowing,
             enter = DialogContentEnterTransition,

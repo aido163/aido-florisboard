@@ -29,8 +29,16 @@
     <style name="FlorisImeTheme" parent="android:Theme.Material.InputMethod">
         <!-- Need this to prevent Xiaomi devices from messing with our beautiful UI -->
         <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
-        <!-- FFS -->
+        <!-- IME windows are MATCH_PARENT. Opaque chrome here paints a black slab over the host app. -->
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:colorBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:imeFullscreenBackground">@android:color/transparent</item>
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
+        <item name="android:enforceStatusBarContrast" tools:targetApi="q">false</item>
     </style>
 
     <style name="FlorisAppTheme.Transparent" parent="android:style/Theme.Material.NoActionBar">

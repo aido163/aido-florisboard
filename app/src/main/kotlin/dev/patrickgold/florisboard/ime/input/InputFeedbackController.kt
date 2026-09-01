@@ -21,6 +21,7 @@ import android.media.AudioManager
 import android.provider.Settings
 import android.view.HapticFeedbackConstants
 import androidx.compose.runtime.staticCompositionLocalOf
+import dev.patrickgold.florisboard.FlorisApplication
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.ime.keyboard.KeyData
 import dev.patrickgold.florisboard.ime.text.key.KeyCode
@@ -47,6 +48,8 @@ class InputFeedbackController private constructor(private val ims: InputMethodSe
     }
 
     private val prefs by FlorisPreferenceStore
+    private val hostApp: FlorisApplication?
+        get() = ims.applicationContext as? FlorisApplication
 
     private val audioManager = ims.systemServiceOrNull(AudioManager::class)
     private val vibrator = ims.systemVibratorOrNull()
@@ -93,7 +96,11 @@ class InputFeedbackController private constructor(private val ims: InputMethodSe
 
     private fun performAudioFeedback(data: KeyData, factor: Double) {
         if (audioManager == null) return
-        if (!prefs.inputFeedback.audioEnabled.get()) return
+        if (!InputFeedbackPolicy.isEnabled(
+                hostApp?.hostAudioFeedbackEnabled(),
+                prefs.inputFeedback.audioEnabled.get(),
+            )
+        ) return
         if (prefs.inputFeedback.audioActivationMode.get() ==
             InputFeedbackActivationMode.RESPECT_SYSTEM_SETTINGS && !systemAudioEnabled) return
 
@@ -114,7 +121,11 @@ class InputFeedbackController private constructor(private val ims: InputMethodSe
 
     private fun performHapticFeedback(data: KeyData, factor: Double) {
         if (vibrator == null) return
-        if (!prefs.inputFeedback.hapticEnabled.get()) return
+        if (!InputFeedbackPolicy.isEnabled(
+                hostApp?.hostHapticFeedbackEnabled(),
+                prefs.inputFeedback.hapticEnabled.get(),
+            )
+        ) return
         if (prefs.inputFeedback.hapticActivationMode.get() ==
             InputFeedbackActivationMode.RESPECT_SYSTEM_SETTINGS && !systemHapticEnabled) return
 

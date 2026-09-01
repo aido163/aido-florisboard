@@ -523,7 +523,7 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         )
         val landscapeInputUiMode = enum(
             key = "keyboard__landscape_input_ui_mode",
-            default = LandscapeInputUiMode.DYNAMICALLY_SHOW,
+            default = LandscapeInputUiMode.NEVER_SHOW,
         )
         val keySpacingVertical = int(
             key = "keyboard__key_spacing_vertical",

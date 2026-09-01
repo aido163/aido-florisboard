@@ -282,6 +282,7 @@ class FlorisImeService : LifecycleInputMethodService() {
         systemLocalesFlow.value = resources.configuration.locales
 
         WindowCompat.setDecorFitsSystemWindows(window.window!!, false)
+        applyTransparentImeWindow()
         windowController.onConfigurationChanged(resources.configuration)
         windowController.activeWindowConfig.collectLatestIn(lifecycleScope) {
             keyboardManager.updateActiveEvaluators() // TODO: wacky solution, but works for now
@@ -449,11 +450,9 @@ class FlorisImeService : LifecycleInputMethodService() {
         if (config.orientation != Configuration.ORIENTATION_LANDSCAPE) {
             return false
         }
-        return when (prefs.keyboard.landscapeInputUiMode.get()) {
-            LandscapeInputUiMode.DYNAMICALLY_SHOW -> super.onEvaluateFullscreenMode()
-            LandscapeInputUiMode.NEVER_SHOW -> false
-            LandscapeInputUiMode.ALWAYS_SHOW -> true
-        }
+        // AOSP extract UI covers the host app with imeFullscreenBackground (black in night
+        // mode). Only show it when the user explicitly opts in.
+        return prefs.keyboard.landscapeInputUiMode.get() == LandscapeInputUiMode.ALWAYS_SHOW
     }
 
     override fun onUpdateExtractingVisibility(info: EditorInfo?) {
@@ -534,5 +533,19 @@ class FlorisImeService : LifecycleInputMethodService() {
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
         return keyboardManager.onHardwareKeyUp(keyCode, event) || super.onKeyUp(keyCode, event)
+    }
+
+    private fun applyTransparentImeWindow() {
+        val w = window?.window ?: return
+        w.setBackgroundDrawableResource(android.R.color.transparent)
+        w.decorView.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+        w.findViewById<View>(android.R.id.content)?.setBackgroundColor(android.graphics.Color.TRANSPARENT)
+        w.statusBarColor = android.graphics.Color.TRANSPARENT
+        w.navigationBarColor = android.graphics.Color.TRANSPARENT
+        w.setDimAmount(0f)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            w.isNavigationBarContrastEnforced = false
+            w.isStatusBarContrastEnforced = false
+        }
     }
 }

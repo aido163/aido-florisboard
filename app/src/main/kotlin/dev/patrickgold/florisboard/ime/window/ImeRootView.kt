@@ -49,6 +49,7 @@ val LocalWindowController = staticCompositionLocalOf<ImeWindowController> {
 class ImeRootView(val ims: FlorisImeService) : AbstractComposeView(ims) {
     init {
         isHapticFeedbackEnabled = true
+        setBackgroundColor(android.graphics.Color.TRANSPARENT)
         layoutParams = LayoutParams(
             /* width = */ LayoutParams.MATCH_PARENT,
             /* height = */ LayoutParams.MATCH_PARENT,

@@ -85,6 +85,17 @@ open class FlorisApplication : Application() {
      */
     open fun onImeStartInputView() {}
 
+    /**
+     * Host override for keypress haptics. Null = use JetPref only.
+     * False must suppress vibration even if JetPref still says enabled.
+     */
+    open fun hostHapticFeedbackEnabled(): Boolean? = null
+
+    /**
+     * Host override for keypress sounds. Null = use JetPref only.
+     */
+    open fun hostAudioFeedbackEnabled(): Boolean? = null
+
     val cacheManager = lazy { CacheManager(this) }
     val clipboardManager = lazy { ClipboardManager(this) }
     val editorInstance = lazy { EditorInstance(this) }

@@ -186,8 +186,8 @@ class ImeWindowController(
     /**
      * Called by the accompanying IME service class to request the current window insets.
      *
-     * The window controller will honor the request for computation only if it knows where the window is
-     * located within the root window. If unknown, no response will be given.
+     * If the keyboard has not laid out yet, the host app is left uncovered instead of reporting a
+     * full-screen IME (which paints the IME window chrome over the remaining screen).
      *
      * The response's touchable insets mode will always be [InputMethodService.Insets.TOUCHABLE_INSETS_REGION],
      * even if the touchable area needs to be fullscreen, or matches the visible/content top. This is due to a
@@ -205,41 +205,20 @@ class ImeWindowController(
         outInsets: InputMethodService.Insets,
         isFullscreenInputRequired: Boolean,
     ) {
-        val rootInsets = activeRootInsets.value
-        val windowInsets = activeWindowInsets.value ?: return
-        val rootBounds = rootInsets.boundsPx
-        val windowBounds = windowInsets.boundsPx
-        val windowSpec = activeWindowSpec.value
-        val editorState = editor.state.value
-
-        when (windowSpec) {
-            is ImeWindowSpec.Fixed -> {
-                outInsets.contentTopInsets = windowBounds.top
-                outInsets.visibleTopInsets = windowBounds.top
-            }
-            is ImeWindowSpec.Floating -> {
-                outInsets.contentTopInsets = rootBounds.bottom
-                outInsets.visibleTopInsets = rootBounds.bottom
-            }
-        }
-        when {
-            isFullscreenInputRequired || editorState.isEnabled -> {
-                outInsets.touchableRegion.set(
-                    rootBounds.left,
-                    rootBounds.top,
-                    rootBounds.right,
-                    rootBounds.bottom,
-                )
-            }
-            else -> {
-                outInsets.touchableRegion.set(
-                    windowBounds.left,
-                    windowBounds.top,
-                    windowBounds.right,
-                    windowBounds.bottom,
-                )
-            }
-        }
+        val reported = computeReportedImeInsets(
+            rootBounds = activeRootInsets.value.boundsPx,
+            windowBounds = activeWindowInsets.value?.boundsPx,
+            isFloating = activeWindowSpec.value is ImeWindowSpec.Floating,
+            fullscreenTouchable = isFullscreenInputRequired || editor.state.value.isEnabled,
+        )
+        outInsets.contentTopInsets = reported.contentTopInsets
+        outInsets.visibleTopInsets = reported.visibleTopInsets
+        outInsets.touchableRegion.set(
+            reported.touchable.left,
+            reported.touchable.top,
+            reported.touchable.right,
+            reported.touchable.bottom,
+        )
         outInsets.touchableInsets = InputMethodService.Insets.TOUCHABLE_INSETS_REGION
     }
 
