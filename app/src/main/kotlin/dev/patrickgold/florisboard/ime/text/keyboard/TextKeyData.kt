@@ -143,6 +143,7 @@ data class TextKeyData(
                 IME_SHOW_UI,
                 IME_HIDE_UI,
                 SETTINGS,
+                SUGGEST,
                 VOICE_INPUT,
                 TOGGLE_SMARTBAR_VISIBILITY,
                 TOGGLE_ACTIONS_OVERFLOW,
@@ -492,6 +493,13 @@ data class TextKeyData(
             type = KeyType.CHARACTER,
             code = KeyCode.SETTINGS,
             label = "settings",
+        )
+
+        /** Predefined key data for [KeyCode.SUGGEST] */
+        val SUGGEST = TextKeyData(
+            type = KeyType.SYSTEM_GUI,
+            code = KeyCode.SUGGEST,
+            label = "suggest",
         )
 
         /** Predefined key data for [KeyCode.VOICE_INPUT] */

@@ -174,6 +174,9 @@ fun ComputingEvaluator.computeLabel(data: KeyData): String? {
             KeyCode.KESHIDA -> {
                 evaluator.context()?.getString(R.string.key__view_keshida)
             }
+            KeyCode.SUGGEST -> {
+                evaluator.context()?.getString(R.string.quick_action__suggest)
+            }
             else -> null
         }
     }
@@ -267,6 +270,10 @@ fun ComputingEvaluator.computeImageVector(data: KeyData): ImageVector? {
         }
         KeyCode.SETTINGS -> {
             Icons.Default.Settings
+        }
+        KeyCode.SUGGEST -> {
+            // Prefer the "Suggest" text label in the smartbar so users can find it.
+            null
         }
         KeyCode.SHIFT -> {
             when (evaluator.state.inputShiftState != InputShiftState.UNSHIFTED) {

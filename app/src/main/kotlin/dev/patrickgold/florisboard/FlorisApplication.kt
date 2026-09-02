@@ -96,6 +96,12 @@ open class FlorisApplication : Application() {
      */
     open fun hostAudioFeedbackEnabled(): Boolean? = null
 
+    /**
+     * Host hook for the smartbar Suggest action. Must not hide the IME —
+     * chat capture needs the foreground app window to stay visible.
+     */
+    open fun onHostSuggestRequested() {}
+
     val cacheManager = lazy { CacheManager(this) }
     val clipboardManager = lazy { ClipboardManager(this) }
     val editorInstance = lazy { EditorInstance(this) }

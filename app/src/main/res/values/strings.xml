@@ -83,6 +83,8 @@
     <string name="quick_action__language_switch__tooltip">Perform language switch</string>
     <string name="quick_action__settings" comment="Please mind the limited available space for the quick action strings">Settings</string>
     <string name="quick_action__settings__tooltip">Open settings</string>
+    <string name="quick_action__suggest" comment="Please mind the limited available space for the quick action strings">Suggest</string>
+    <string name="quick_action__suggest__tooltip">Suggest AI replies from the visible chat</string>
     <string name="quick_action__undo" comment="Please mind the limited available space for the quick action strings">Undo</string>
     <string name="quick_action__undo__tooltip">Undo the last input</string>
     <string name="quick_action__redo" comment="Please mind the limited available space for the quick action strings">Redo</string>

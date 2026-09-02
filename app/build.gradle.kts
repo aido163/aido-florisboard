@@ -72,7 +72,7 @@ configure<LibraryExtension> {
         // Keep the previous application values so existing FlorisBoard source compiles.
         // Host package id. Clipboard authority and API 34+ IME checks must match
         // the consuming app, not the library's historical applicationId.
-        buildConfigField("String", "APPLICATION_ID", "\"com.customkeyboard.app\"")
+        buildConfigField("String", "APPLICATION_ID", "\"com.aido.type\"")
         buildConfigField("String", "VERSION_NAME", "\"${projectVersionName.substringBefore("-")}\"")
         buildConfigField("int", "VERSION_CODE", projectVersionCode)
         buildConfigField("String", "BUILD_COMMIT_HASH", "\"${getGitCommitHash().get()}\"")
