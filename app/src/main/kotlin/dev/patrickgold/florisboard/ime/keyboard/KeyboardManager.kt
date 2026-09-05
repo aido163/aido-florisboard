@@ -225,6 +225,9 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     fun resetSuggestions(content: EditorContent) {
+        if (nlpManager.hasPinnedSuggestions()) {
+            return
+        }
         if (!(activeState.isComposingEnabled || nlpManager.isSuggestionOn())) {
             nlpManager.clearSuggestions()
             return
@@ -284,6 +287,10 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     fun commitCandidate(candidate: SuggestionCandidate) {
+        if (nlpManager.isPinnedPending(candidate)) {
+            return
+        }
+        nlpManager.clearPinnedSuggestions()
         scope.launch {
             candidate.sourceProvider?.notifySuggestionAccepted(subtypeManager.activeSubtype, candidate)
         }

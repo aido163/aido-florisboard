@@ -410,6 +410,7 @@ class FlorisImeService : LifecycleInputMethodService() {
 
     override fun onFinishInputView(finishingInput: Boolean) {
         flogInfo { "finishing=$finishingInput" }
+        (application as? FlorisApplication)?.onImeFinishInputView()
         super.onFinishInputView(finishingInput)
         editorInstance.handleFinishInputView()
     }

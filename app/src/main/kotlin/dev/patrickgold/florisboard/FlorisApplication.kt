@@ -86,6 +86,12 @@ open class FlorisApplication : Application() {
     open fun onImeStartInputView() {}
 
     /**
+     * Called from [FlorisImeService.onFinishInputView] so the host can drop
+     * pinned AI chips when the keyboard hides.
+     */
+    open fun onImeFinishInputView() {}
+
+    /**
      * Host override for keypress haptics. Null = use JetPref only.
      * False must suppress vibration even if JetPref still says enabled.
      */

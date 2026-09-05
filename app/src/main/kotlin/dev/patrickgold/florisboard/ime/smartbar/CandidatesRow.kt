@@ -95,7 +95,7 @@ fun CandidatesRow(modifier: Modifier = Modifier) {
                         weight(1f)
                     }
                     .conditional(displayMode != CandidatesDisplayMode.CLASSIC) {
-                        wrapContentWidth().widthIn(max = 160.dp)
+                        wrapContentWidth().widthIn(max = 280.dp)
                     }
             }
             val list = when (displayMode) {

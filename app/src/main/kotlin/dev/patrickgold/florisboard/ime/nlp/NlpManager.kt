@@ -76,6 +76,9 @@ class NlpManager(context: Context) {
         scope.launch { assembleCandidates() }
     }
 
+    @Volatile
+    private var pinnedCandidates: List<SuggestionCandidate> = emptyList()
+
     private val _activeCandidatesFlow = MutableStateFlow(listOf<SuggestionCandidate>())
     val activeCandidatesFlow = _activeCandidatesFlow.asStateFlow()
     inline var activeCandidates
@@ -240,6 +243,22 @@ class NlpManager(context: Context) {
         }
     }
 
+    fun pinSuggestions(suggestions: List<SuggestionCandidate>) {
+        pinnedCandidates = suggestions.toList()
+        assembleCandidates()
+    }
+
+    fun clearPinnedSuggestions() {
+        if (pinnedCandidates.isEmpty()) return
+        pinnedCandidates = emptyList()
+        assembleCandidates()
+    }
+
+    fun hasPinnedSuggestions(): Boolean = pinnedCandidates.isNotEmpty()
+
+    fun isPinnedPending(candidate: SuggestionCandidate): Boolean =
+        candidate.secondaryText?.toString() == PINNED_PENDING_SECONDARY
+
     fun clearSuggestions() {
         val reqTime = SystemClock.uptimeMillis()
         runBlocking {
@@ -276,7 +295,9 @@ class NlpManager(context: Context) {
 
     private fun assembleCandidates() {
         runBlocking {
+            val pinned = pinnedCandidates
             val candidates = when {
+                pinned.isNotEmpty() -> pinned
                 isSuggestionOn() -> {
                     clipboardSuggestionProvider.suggest(
                         subtype = Subtype.DEFAULT,
@@ -297,6 +318,11 @@ class NlpManager(context: Context) {
             activeCandidates = candidates
             autoExpandCollapseSmartbarActions(candidates, NlpInlineAutofill.suggestions.value)
         }
+    }
+
+    companion object {
+        const val PINNED_AI_SECONDARY = "AI"
+        const val PINNED_PENDING_SECONDARY = "wait"
     }
 
     fun autoExpandCollapseSmartbarActions(list1: List<*>?, list2: List<*>?) {
