@@ -27,6 +27,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.automirrored.outlined.Backspace
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentCut
@@ -272,8 +273,7 @@ fun ComputingEvaluator.computeImageVector(data: KeyData): ImageVector? {
             Icons.Default.Settings
         }
         KeyCode.SUGGEST -> {
-            // Prefer the "Suggest" text label in the smartbar so users can find it.
-            null
+            Icons.Default.AutoAwesome
         }
         KeyCode.SHIFT -> {
             when (evaluator.state.inputShiftState != InputShiftState.UNSHIFTED) {

@@ -156,6 +156,19 @@
   "smartbar-action-key:disabled": {
     "foreground": "var(--on-background-disabled)"
   },
+  "smartbar-action-key[code=-302]": {
+    "background": "var(--primary)",
+    "foreground": "var(--on-primary)",
+    "font-size": "13sp",
+    "padding": "8dp",
+    "shape": "rounded-corner(16dp, 16dp, 16dp, 16dp)",
+    "text-max-lines": "1"
+  },
+  "smartbar-action-key[code=-302]:pressed": {
+    "background": "var(--primary-variant)",
+    "foreground": "var(--on-primary)",
+    "text-max-lines": "1"
+  },
 
   "smartbar-actions-overflow": {
     "margin": "4dp"

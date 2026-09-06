@@ -25,7 +25,11 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -34,11 +38,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import dev.patrickgold.compose.tooltip.PlainTooltip
 import dev.patrickgold.florisboard.ime.input.LocalInputFeedbackController
 import dev.patrickgold.florisboard.ime.keyboard.ComputingEvaluator
 import dev.patrickgold.florisboard.ime.keyboard.computeImageVector
 import dev.patrickgold.florisboard.ime.keyboard.computeLabel
+import dev.patrickgold.florisboard.ime.text.key.KeyCode
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyData
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import org.florisboard.lib.snygg.SnyggSelector
@@ -86,6 +92,9 @@ fun QuickActionButton(
         }
     }
 
+    val isSuggestChip = type == QuickActionBarType.INTERACTIVE_BUTTON &&
+        action.keyData().code == KeyCode.SUGGEST
+
     PlainTooltip(action.computeTooltip(evaluator), enabled = type == QuickActionBarType.INTERACTIVE_BUTTON) {
         SnyggBox(
             elementName = elementName,
@@ -93,7 +102,15 @@ fun QuickActionButton(
             selector = selector,
             modifier = modifier,
             clickAndSemanticsModifier = Modifier
-                .aspectRatio(1f)
+                .then(
+                    if (isSuggestChip) {
+                        Modifier
+                            .fillMaxHeight()
+                            .wrapContentWidth()
+                    } else {
+                        Modifier.aspectRatio(1f)
+                    },
+                )
                 .indication(interactionSource, LocalIndication.current)
                 .pointerInput(action, isEnabled) {
                     awaitEachGesture {
@@ -118,6 +135,33 @@ fun QuickActionButton(
                 },
             contentAlignment = Alignment.Center,
         ) {
+            if (isSuggestChip && action is QuickAction.InsertKey) {
+                val (imageVector, label) = remember(action, evaluator) {
+                    evaluator.computeImageVector(action.data) to evaluator.computeLabel(action.data)
+                }
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (imageVector != null) {
+                        SnyggBox(
+                            elementName = "$elementName-icon",
+                            attributes = attributes,
+                            selector = selector,
+                        ) {
+                            SnyggIcon(imageVector = imageVector)
+                        }
+                    }
+                    if (!label.isNullOrBlank()) {
+                        SnyggText(
+                            elementName = "$elementName-text",
+                            attributes = attributes,
+                            selector = selector,
+                            text = label,
+                        )
+                    }
+                }
+            } else {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 // Render foreground
                 when (action) {
@@ -162,6 +206,7 @@ fun QuickActionButton(
                         text = action.computeDisplayName(evaluator = evaluator),
                     )
                 }
+            }
             }
         }
     }

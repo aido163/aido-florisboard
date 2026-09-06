@@ -144,6 +144,23 @@ val FlorisImeThemeBaseStyle = SnyggStylesheet.v2 {
         foreground = rgbaColor(220, 220, 220)
         shape = `var`("--shape")
     }
+    FlorisImeUi.SmartbarActionKey.elementName(FlorisImeUi.Attr.Code to listOf(KeyCode.SUGGEST)) {
+        background = `var`("--primary")
+        foreground = `var`("--on-primary")
+        fontSize = fontSize(13.sp)
+        padding = padding(8.dp)
+        shape = roundedCornerShape(16.dp)
+        textMaxLines = textMaxLines(1)
+        textOverflow = textOverflow(TextOverflow.Ellipsis)
+    }
+    FlorisImeUi.SmartbarActionKey.elementName(
+        FlorisImeUi.Attr.Code to listOf(KeyCode.SUGGEST),
+        selector = SnyggSelector.PRESSED,
+    ) {
+        background = `var`("--primary-variant")
+        foreground = `var`("--on-primary")
+        textMaxLines = textMaxLines(1)
+    }
     FlorisImeUi.SmartbarActionKey.elementName(selector = SnyggSelector.DISABLED) {
         foreground = `var`("--on-background-disabled")
     }
