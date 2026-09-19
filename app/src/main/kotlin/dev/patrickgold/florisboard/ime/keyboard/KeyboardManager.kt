@@ -99,7 +99,6 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     val resources = KeyboardManagerResources()
     val activeState = ObservableKeyboardState.new()
-    val writerToolsNestedOpen = MutableStateFlow(false)
     var smartbarVisibleDynamicActionsCount by mutableIntStateOf(0)
     private var lastToastReference = WeakReference<Toast>(null)
 
@@ -292,12 +291,9 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             return
         }
         if (nlpManager.isPinnedGrammar(candidate)) {
-            nlpManager.clearPinnedSuggestions()
-            val accepted = (appContext as? FlorisApplication)
-                ?.onHostGrammarChipAccepted(candidate.text.toString()) == true
-            if (accepted) {
-                return
-            }
+            (appContext as? FlorisApplication)
+                ?.onHostGrammarChipAccepted(candidate.text.toString())
+            return
         }
         nlpManager.clearPinnedSuggestions()
         scope.launch {

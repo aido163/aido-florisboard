@@ -17,6 +17,7 @@
 package org.florisboard.lib.snygg.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -110,6 +111,7 @@ internal fun SnyggChip(
                 onClick = onClick,
             ),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
     ) {
         icon?.invoke()
         text?.invoke()

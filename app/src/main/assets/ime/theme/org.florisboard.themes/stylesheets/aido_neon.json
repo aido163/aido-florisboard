@@ -182,9 +182,9 @@
   "smartbar-action-key[code=-302]": {
     "background": "var(--primary)",
     "foreground": "var(--on-primary)",
-    "font-size": "13sp",
-    "padding": "8dp",
-    "shape": "rounded-corner(16dp, 16dp, 16dp, 16dp)",
+    "font-size": "12sp",
+    "padding": "10dp 6dp",
+    "shape": "var(--shape-chip)",
     "text-max-lines": "1"
   },
   "smartbar-action-key[code=-302]:pressed": {
@@ -192,6 +192,73 @@
     "foreground": "var(--on-primary)",
     "text-max-lines": "1"
   },
+
+  "smartbar-action-key[code=-303]": {
+    "background": "var(--surface)",
+    "foreground": "var(--on-surface)",
+    "font-size": "12sp",
+    "padding": "10dp 6dp",
+    "shape": "var(--shape-chip)",
+    "text-max-lines": "1"
+  },
+  "smartbar-action-key[code=-303]:pressed": {
+    "background": "var(--surface-variant)",
+    "foreground": "var(--on-surface)",
+    "text-max-lines": "1"
+  },
+  "smartbar-action-key[code=-304]": {
+    "background": "var(--surface)",
+    "foreground": "var(--on-surface)",
+    "font-size": "12sp",
+    "padding": "10dp 6dp",
+    "shape": "var(--shape-chip)",
+    "text-max-lines": "1"
+  },
+  "smartbar-action-key[code=-304]:pressed": {
+    "background": "var(--surface-variant)",
+    "foreground": "var(--on-surface)",
+    "text-max-lines": "1"
+  },
+  "smartbar-action-key[code=-305]": {
+    "background": "var(--surface)",
+    "foreground": "var(--on-surface)",
+    "font-size": "12sp",
+    "padding": "10dp 6dp",
+    "shape": "var(--shape-chip)",
+    "text-max-lines": "1"
+  },
+  "smartbar-action-key[code=-305]:pressed": {
+    "background": "var(--surface-variant)",
+    "foreground": "var(--on-surface)",
+    "text-max-lines": "1"
+  },
+  "smartbar-action-key[code=-306]": {
+    "background": "var(--surface)",
+    "foreground": "var(--on-surface)",
+    "font-size": "12sp",
+    "padding": "10dp 6dp",
+    "shape": "var(--shape-chip)",
+    "text-max-lines": "1"
+  },
+  "smartbar-action-key[code=-306]:pressed": {
+    "background": "var(--surface-variant)",
+    "foreground": "var(--on-surface)",
+    "text-max-lines": "1"
+  },
+  "smartbar-action-key[code=-307]": {
+    "background": "var(--surface)",
+    "foreground": "var(--on-surface)",
+    "font-size": "12sp",
+    "padding": "10dp 6dp",
+    "shape": "var(--shape-chip)",
+    "text-max-lines": "1"
+  },
+  "smartbar-action-key[code=-307]:pressed": {
+    "background": "var(--surface-variant)",
+    "foreground": "var(--on-surface)",
+    "text-max-lines": "1"
+  },
+
 
   "smartbar-actions-overflow": {
     "margin": "4dp"

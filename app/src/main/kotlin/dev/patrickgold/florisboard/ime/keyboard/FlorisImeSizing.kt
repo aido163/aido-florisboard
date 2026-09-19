@@ -81,21 +81,14 @@ object FlorisImeSizing {
     @Composable
     fun smartbarRowCountAsState(): State<Int> {
         val prefs by FlorisPreferenceStore
-        val context = LocalContext.current
-        val keyboardManager by context.keyboardManager()
         val smartbarEnabled by prefs.smartbar.enabled.collectAsState()
         val smartbarLayout by prefs.smartbar.layout.collectAsState()
-        val sharedActionsExpanded by prefs.smartbar.sharedActionsExpanded.collectAsState()
         val extendedActionsExpanded by prefs.smartbar.extendedActionsExpanded.collectAsState()
         val extendedActionsPlacement by prefs.smartbar.extendedActionsPlacement.collectAsState()
-        val writerNestedOpen by keyboardManager.writerToolsNestedOpen.collectAsState()
         return remember {
             derivedStateOf {
                 if (smartbarEnabled) {
                     when {
-                        writerNestedOpen &&
-                            smartbarLayout == SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED &&
-                            !sharedActionsExpanded -> 2
                         smartbarLayout == SmartbarLayout.SUGGESTIONS_ACTIONS_EXTENDED &&
                             extendedActionsExpanded &&
                             extendedActionsPlacement != ExtendedActionsPlacement.OVERLAY_APP_UI -> 2

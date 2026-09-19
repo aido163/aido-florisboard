@@ -58,6 +58,15 @@ enum class QuickActionBarType {
     EDITOR_TILE;
 }
 
+private val WRITER_CHIP_CODES = setOf(
+    KeyCode.SUGGEST,
+    KeyCode.GRAMMAR,
+    KeyCode.REWRITE,
+    KeyCode.TRANSLATE,
+    KeyCode.DETECT_AI,
+    KeyCode.HUMANIZE,
+)
+
 @Composable
 fun QuickActionButton(
     action: QuickAction,
@@ -93,7 +102,7 @@ fun QuickActionButton(
     }
 
     val isSuggestChip = type == QuickActionBarType.INTERACTIVE_BUTTON &&
-        (action.keyData().code == KeyCode.SUGGEST || action.keyData().code == KeyCode.GRAMMAR)
+        action.keyData().code in WRITER_CHIP_CODES
 
     PlainTooltip(action.computeTooltip(evaluator), enabled = type == QuickActionBarType.INTERACTIVE_BUTTON) {
         SnyggBox(

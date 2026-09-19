@@ -317,20 +317,32 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
         }
     }
 
-    val nestedOpen by keyboardManager.writerToolsNestedOpen.collectAsState()
-    val showWriterBar = smartbarLayout == SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED && !sharedActionsExpanded
-    val mainHeight = if (showWriterBar && nestedOpen) {
-        FlorisImeSizing.smartbarHeight * 2
-    } else {
-        FlorisImeSizing.smartbarHeight
+    val candidates by nlpManager.activeCandidatesFlow.collectAsState()
+    val showingWriterResult = candidates.any {
+        nlpManager.isPinnedPending(it) || nlpManager.isPinnedGrammar(it)
+    }
+    val showWriterBar = showWriterToolsRow(
+        layout = smartbarLayout,
+        sharedActionsExpanded = sharedActionsExpanded,
+        hasPinnedWriterChips = showingWriterResult,
+    )
+
+    if (showingWriterResult) {
+        SnyggRow(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(FlorisImeSizing.smartbarHeight),
+        ) {
+            CandidatesRow()
+        }
+        return
     }
 
     if (showWriterBar) {
         WriterToolsBar(
             modifier = modifier
                 .fillMaxWidth()
-                .height(mainHeight),
-            leading = { SharedActionsToggle() },
+                .height(FlorisImeSizing.smartbarHeight),
         )
         return
     }

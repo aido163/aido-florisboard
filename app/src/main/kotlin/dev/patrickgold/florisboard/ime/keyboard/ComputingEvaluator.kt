@@ -28,7 +28,10 @@ import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.automirrored.outlined.Backspace
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.EditNote
+import androidx.compose.material.icons.filled.FactCheck
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.ContentPasteGo
@@ -48,6 +51,7 @@ import androidx.compose.material.icons.filled.SentimentSatisfiedAlt
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SpaceBar
 import androidx.compose.material.icons.filled.Spellcheck
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.ui.graphics.vector.ImageVector
 import dev.patrickgold.florisboard.FlorisImeService
 import dev.patrickgold.florisboard.R
@@ -295,16 +299,16 @@ fun ComputingEvaluator.computeImageVector(data: KeyData): ImageVector? {
             Icons.Default.Spellcheck
         }
         KeyCode.REWRITE -> {
-            Icons.Default.Settings
+            Icons.Default.EditNote
         }
         KeyCode.TRANSLATE -> {
-            Icons.Default.Language
+            Icons.Default.Translate
         }
         KeyCode.DETECT_AI -> {
-            Icons.Default.Search
+            Icons.Default.FactCheck
         }
         KeyCode.HUMANIZE -> {
-            Icons.Default.SentimentSatisfiedAlt
+            Icons.Default.Chat
         }
         KeyCode.SHIFT -> {
             when (evaluator.state.inputShiftState != InputShiftState.UNSHIFTED) {

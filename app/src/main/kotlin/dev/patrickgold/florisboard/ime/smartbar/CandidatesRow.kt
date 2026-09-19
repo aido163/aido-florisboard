@@ -41,6 +41,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.ime.nlp.ClipboardSuggestionCandidate
+import dev.patrickgold.florisboard.ime.nlp.NlpManager
 import dev.patrickgold.florisboard.ime.nlp.SuggestionCandidate
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import dev.patrickgold.florisboard.keyboardManager
@@ -58,6 +59,12 @@ import org.florisboard.lib.snygg.ui.SnyggSpacer
 import org.florisboard.lib.snygg.ui.SnyggText
 
 val CandidatesRowScrollbarHeight = 2.dp
+
+private val HIDDEN_PIN_SECONDARY = setOf(
+    NlpManager.PINNED_GRAMMAR_SECONDARY,
+    NlpManager.PINNED_PENDING_SECONDARY,
+    NlpManager.PINNED_AI_SECONDARY,
+)
 
 @Composable
 fun CandidatesRow(modifier: Modifier = Modifier) {
@@ -206,12 +213,13 @@ private fun CandidateItem(
                 selector = selector,
                 text = candidate.text.toString(),
             )
-            if (candidate.secondaryText != null) {
+            val secondary = candidate.secondaryText?.toString()
+            if (secondary != null && secondary !in HIDDEN_PIN_SECONDARY) {
                 SnyggText(
                     elementName = "$elementName-secondary-text",
                     attributes = attributes,
                     selector = selector,
-                    text = candidate.secondaryText!!.toString(),
+                    text = secondary,
                 )
             }
         }
