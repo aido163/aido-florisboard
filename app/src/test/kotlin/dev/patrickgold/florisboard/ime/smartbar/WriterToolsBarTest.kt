@@ -34,13 +34,18 @@ class WriterToolsBarTest : FunSpec({
     test("writer row hides when result chips are pinned") {
         showWriterToolsRow(
             layout = SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED,
-            sharedActionsExpanded = false,
-            hasPinnedWriterChips = true,
+            hasSuggestionStrip = true,
         ) shouldBe false
         showWriterToolsRow(
             layout = SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED,
-            sharedActionsExpanded = false,
-            hasPinnedWriterChips = false,
+            hasSuggestionStrip = false,
+        ) shouldBe true
+    }
+
+    test("idle keyboard always prefers the chip row") {
+        showWriterToolsRow(
+            layout = SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED,
+            hasSuggestionStrip = false,
         ) shouldBe true
     }
 })

@@ -123,6 +123,16 @@ open class FlorisApplication : Application() {
     open fun onHostHumanizeRequested() {}
 
     /**
+     * Host hook when a nested writer-tool child chip is tapped.
+     */
+    open fun onHostWriterVariantRequested(id: String, label: String) {}
+
+    /**
+     * Host hook for back from nested writer variants or results.
+     */
+    open fun onHostWriterBackRequested() {}
+
+    /**
      * Host hook when a writer-transform chip is tapped. Return true if the
      * host handled the chip (skip default commitCompletion).
      */

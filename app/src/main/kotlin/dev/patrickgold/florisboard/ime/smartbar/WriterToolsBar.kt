@@ -25,11 +25,17 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -40,11 +46,14 @@ import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.FlorisApplication
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.ime.input.LocalInputFeedbackController
+import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.text.key.KeyCode
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyData
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import org.florisboard.lib.compose.stringRes
 import org.florisboard.lib.snygg.SnyggSelector
+import org.florisboard.lib.snygg.ui.SnyggIcon
+import org.florisboard.lib.snygg.ui.SnyggIconButton
 import org.florisboard.lib.snygg.ui.SnyggRow
 import org.florisboard.lib.snygg.ui.SnyggText
 
@@ -53,7 +62,7 @@ internal data class WriterBarAction(
     val labelRes: Int,
 )
 
-/** Draft transforms. Tap runs the tool — no nested folders. */
+/** Draft transforms. Nested children live in [WriterNav]. Suggest stays a chat overlay. */
 internal val WriterBarTools = listOf(
     WriterBarAction(TextKeyData.GRAMMAR, R.string.writer_tools__fix),
     WriterBarAction(TextKeyData.REWRITE, R.string.quick_action__rewrite),
@@ -68,17 +77,24 @@ internal val WriterBarPrimary = WriterBarAction(
 
 internal fun showWriterToolsRow(
     layout: SmartbarLayout,
-    sharedActionsExpanded: Boolean,
-    hasPinnedWriterChips: Boolean,
-): Boolean = layout == SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED &&
-    !sharedActionsExpanded &&
-    !hasPinnedWriterChips
+    hasSuggestionStrip: Boolean,
+): Boolean = layout == SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED && !hasSuggestionStrip
+
+private fun keyCodeForWriterMode(mode: String): Int = when (mode) {
+    "grammar" -> KeyCode.GRAMMAR
+    "rewrite" -> KeyCode.REWRITE
+    "translate" -> KeyCode.TRANSLATE
+    "humanize" -> KeyCode.HUMANIZE
+    "detect" -> KeyCode.DETECT_AI
+    else -> KeyCode.UNSPECIFIED
+}
 
 @Composable
 fun WriterToolsBar(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val writerUi by WriterNavStore.ui.collectAsState()
     fun fire(data: TextKeyData) {
         val app = context.applicationContext as? FlorisApplication ?: return
         when (data.code) {
@@ -90,27 +106,40 @@ fun WriterToolsBar(
             KeyCode.DETECT_AI -> app.onHostDetectAiRequested()
         }
     }
+    fun fireBack() {
+        val app = context.applicationContext as? FlorisApplication ?: return
+        app.onHostWriterBackRequested()
+    }
+    fun fireVariant(variant: WriterVariant) {
+        val app = context.applicationContext as? FlorisApplication ?: return
+        app.onHostWriterVariantRequested(variant.id, variant.label)
+    }
 
     @Composable
-    fun RowScope.ToolChip(action: WriterBarAction) {
+    fun RowScope.ToolChip(
+        label: String,
+        code: Int,
+        onClick: () -> Unit,
+        weight: Float = 1f,
+    ) {
         val inputFeedbackController = LocalInputFeedbackController.current
         val interactionSource = remember { MutableInteractionSource() }
         val isPressed by interactionSource.collectIsPressedAsState()
         val elementName = FlorisImeUi.SmartbarActionKey.elementName
-        val attributes = mapOf(FlorisImeUi.Attr.Code to action.data.code)
+        val attributes = mapOf(FlorisImeUi.Attr.Code to code)
         val selector = if (isPressed) SnyggSelector.PRESSED else null
         SnyggRow(
             elementName = elementName,
             attributes = attributes,
             selector = selector,
             modifier = Modifier
-                .weight(1f)
+                .weight(weight)
                 .fillMaxWidth()
                 .fillMaxHeight()
                 .padding(vertical = 5.dp),
             clickAndSemanticsModifier = Modifier
                 .indication(interactionSource, LocalIndication.current)
-                .pointerInput(action.data.code) {
+                .pointerInput(code, label) {
                     awaitEachGesture {
                         val down = awaitFirstDown()
                         down.consume()
@@ -121,7 +150,7 @@ fun WriterToolsBar(
                         if (up != null) {
                             up.consume()
                             interactionSource.tryEmit(PressInteraction.Release(press))
-                            fire(action.data)
+                            onClick()
                         } else {
                             interactionSource.tryEmit(PressInteraction.Cancel(press))
                         }
@@ -134,8 +163,19 @@ fun WriterToolsBar(
                 elementName = "$elementName-text",
                 attributes = attributes,
                 selector = selector,
-                text = stringRes(action.labelRes),
+                text = label,
             )
+        }
+    }
+
+    @Composable
+    fun WriterBackButton() {
+        SnyggIconButton(
+            elementName = FlorisImeUi.SmartbarSharedActionsToggle.elementName,
+            onClick = { fireBack() },
+            modifier = Modifier.sizeIn(maxHeight = FlorisImeSizing.smartbarHeight).aspectRatio(1f),
+        ) {
+            SnyggIcon(imageVector = Icons.AutoMirrored.Default.KeyboardArrowLeft)
         }
     }
 
@@ -147,8 +187,46 @@ fun WriterToolsBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        (WriterBarTools + WriterBarPrimary).forEach { action ->
-            ToolChip(action)
+        when (writerUi.layer) {
+            WriterLayer.TOOLS -> {
+                (WriterBarTools + WriterBarPrimary).forEach { action ->
+                    ToolChip(
+                        label = stringRes(action.labelRes),
+                        code = action.data.code,
+                        onClick = { fire(action.data) },
+                    )
+                }
+            }
+            WriterLayer.VARIANTS -> {
+                WriterBackButton()
+                WriterNav.variantsFor(writerUi.mode).forEach { variant ->
+                    ToolChip(
+                        label = variant.label,
+                        code = keyCodeForWriterMode(writerUi.mode),
+                        onClick = { fireVariant(variant) },
+                    )
+                }
+            }
+            WriterLayer.RESULTS -> {
+                WriterBackButton()
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.CenterStart,
+                ) {
+                    val elementName = FlorisImeUi.SmartbarActionKey.elementName
+                    SnyggText(
+                        elementName = "$elementName-text",
+                        attributes = mapOf(FlorisImeUi.Attr.Code to keyCodeForWriterMode(writerUi.mode)),
+                        text = if (writerUi.thinking) {
+                            stringRes(R.string.writer_tools__thinking)
+                        } else {
+                            writerUi.variant?.label.orEmpty()
+                        },
+                    )
+                }
+            }
         }
     }
 }

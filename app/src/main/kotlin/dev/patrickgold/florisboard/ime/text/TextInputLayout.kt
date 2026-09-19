@@ -32,6 +32,9 @@ import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.InlineSuggestionsStyleCache
 import dev.patrickgold.florisboard.ime.smartbar.Smartbar
+import dev.patrickgold.florisboard.ime.smartbar.WriterLayer
+import dev.patrickgold.florisboard.ime.smartbar.WriterNavStore
+import dev.patrickgold.florisboard.ime.smartbar.WriterSuggestionsPanel
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionsOverflowPanel
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyboardLayout
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
@@ -50,6 +53,7 @@ fun TextInputLayout(
 
     val state by keyboardManager.activeState.collectAsState()
     val evaluator by keyboardManager.activeEvaluator.collectAsState()
+    val writerUi by WriterNavStore.ui.collectAsState()
 
     InlineSuggestionsStyleCache()
 
@@ -59,7 +63,9 @@ fun TextInputLayout(
             .wrapContentHeight(),
     ) {
         Smartbar()
-        if (state.isActionsOverflowVisible) {
+        if (writerUi.layer == WriterLayer.RESULTS) {
+            WriterSuggestionsPanel(writerUi)
+        } else if (state.isActionsOverflowVisible) {
             QuickActionsOverflowPanel()
         } else {
             Box {

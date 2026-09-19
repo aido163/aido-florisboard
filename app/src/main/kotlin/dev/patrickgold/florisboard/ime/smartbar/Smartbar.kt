@@ -318,25 +318,14 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
     }
 
     val candidates by nlpManager.activeCandidatesFlow.collectAsState()
-    val showingWriterResult = candidates.any {
+    val writerUi by WriterNavStore.ui.collectAsState()
+    val showingSuggestionStrip = !writerUi.nestedOpen && candidates.any {
         nlpManager.isPinnedPending(it) || nlpManager.isPinnedGrammar(it)
     }
-    val showWriterBar = showWriterToolsRow(
+    val showWriterBar = writerUi.nestedOpen || showWriterToolsRow(
         layout = smartbarLayout,
-        sharedActionsExpanded = sharedActionsExpanded,
-        hasPinnedWriterChips = showingWriterResult,
+        hasSuggestionStrip = showingSuggestionStrip,
     )
-
-    if (showingWriterResult) {
-        SnyggRow(
-            modifier = modifier
-                .fillMaxWidth()
-                .height(FlorisImeSizing.smartbarHeight),
-        ) {
-            CandidatesRow()
-        }
-        return
-    }
 
     if (showWriterBar) {
         WriterToolsBar(
@@ -344,6 +333,27 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .height(FlorisImeSizing.smartbarHeight),
         )
+        return
+    }
+
+    if (showingSuggestionStrip) {
+        SnyggRow(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(FlorisImeSizing.smartbarHeight),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SuggestionBackButton(
+                onClick = { nlpManager.clearPinnedSuggestions() },
+            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxHeight(),
+            ) {
+                CandidatesRow()
+            }
+        }
         return
     }
 
@@ -393,6 +403,19 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun SuggestionBackButton(
+    onClick: () -> Unit,
+) {
+    SnyggIconButton(
+        elementName = FlorisImeUi.SmartbarSharedActionsToggle.elementName,
+        onClick = onClick,
+        modifier = Modifier.sizeIn(maxHeight = FlorisImeSizing.smartbarHeight).aspectRatio(1f),
+    ) {
+        SnyggIcon(imageVector = Icons.AutoMirrored.Default.KeyboardArrowLeft)
     }
 }
 
