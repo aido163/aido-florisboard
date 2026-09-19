@@ -108,6 +108,26 @@ open class FlorisApplication : Application() {
      */
     open fun onHostSuggestRequested() {}
 
+    /**
+     * Host hook for the smartbar Fix grammar action. Stays in the IME —
+     * rewrites the current field without opening the chat overlay.
+     */
+    open fun onHostGrammarRequested() {}
+
+    open fun onHostRewriteRequested() {}
+
+    open fun onHostTranslateRequested() {}
+
+    open fun onHostDetectAiRequested() {}
+
+    open fun onHostHumanizeRequested() {}
+
+    /**
+     * Host hook when a writer-transform chip is tapped. Return true if the
+     * host handled the chip (skip default commitCompletion).
+     */
+    open fun onHostGrammarChipAccepted(text: String): Boolean = false
+
     val cacheManager = lazy { CacheManager(this) }
     val clipboardManager = lazy { ClipboardManager(this) }
     val editorInstance = lazy { EditorInstance(this) }

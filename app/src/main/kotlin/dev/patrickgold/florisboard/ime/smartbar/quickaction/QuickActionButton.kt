@@ -93,7 +93,7 @@ fun QuickActionButton(
     }
 
     val isSuggestChip = type == QuickActionBarType.INTERACTIVE_BUTTON &&
-        action.keyData().code == KeyCode.SUGGEST
+        (action.keyData().code == KeyCode.SUGGEST || action.keyData().code == KeyCode.GRAMMAR)
 
     PlainTooltip(action.computeTooltip(evaluator), enabled = type == QuickActionBarType.INTERACTIVE_BUTTON) {
         SnyggBox(

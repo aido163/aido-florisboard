@@ -93,6 +93,11 @@ fun QuickAction.computeDisplayName(evaluator: ComputingEvaluator): String {
             KeyCode.LANGUAGE_SWITCH -> R.string.quick_action__language_switch
             KeyCode.SETTINGS -> R.string.quick_action__settings
             KeyCode.SUGGEST -> R.string.quick_action__suggest
+            KeyCode.GRAMMAR -> R.string.quick_action__grammar
+            KeyCode.REWRITE -> R.string.quick_action__rewrite
+            KeyCode.TRANSLATE -> R.string.quick_action__translate
+            KeyCode.DETECT_AI -> R.string.quick_action__detect
+            KeyCode.HUMANIZE -> R.string.quick_action__humanize
             KeyCode.UNDO -> R.string.quick_action__undo
             KeyCode.REDO -> R.string.quick_action__redo
             KeyCode.TOGGLE_ACTIONS_OVERFLOW -> R.string.quick_action__toggle_actions_overflow
@@ -134,6 +139,11 @@ fun QuickAction.computeTooltip(evaluator: ComputingEvaluator): String {
             KeyCode.LANGUAGE_SWITCH -> R.string.quick_action__language_switch__tooltip
             KeyCode.SETTINGS -> R.string.quick_action__settings__tooltip
             KeyCode.SUGGEST -> R.string.quick_action__suggest__tooltip
+            KeyCode.GRAMMAR -> R.string.quick_action__grammar__tooltip
+            KeyCode.REWRITE -> R.string.quick_action__rewrite__tooltip
+            KeyCode.TRANSLATE -> R.string.quick_action__translate__tooltip
+            KeyCode.DETECT_AI -> R.string.quick_action__detect__tooltip
+            KeyCode.HUMANIZE -> R.string.quick_action__humanize__tooltip
             KeyCode.UNDO -> R.string.quick_action__undo__tooltip
             KeyCode.REDO -> R.string.quick_action__redo__tooltip
             KeyCode.TOGGLE_ACTIONS_OVERFLOW -> R.string.quick_action__toggle_actions_overflow__tooltip

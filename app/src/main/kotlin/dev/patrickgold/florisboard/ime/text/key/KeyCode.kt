@@ -114,6 +114,11 @@ object KeyCode {
 
     const val SETTINGS =                    -301
     const val SUGGEST =                     -302
+    const val GRAMMAR =                     -303
+    const val REWRITE =                    -304
+    const val TRANSLATE =                  -305
+    const val DETECT_AI =                  -306
+    const val HUMANIZE =                   -307
 
     const val CURRENCY_SLOT_1 =             -801
     const val CURRENCY_SLOT_2 =             -802

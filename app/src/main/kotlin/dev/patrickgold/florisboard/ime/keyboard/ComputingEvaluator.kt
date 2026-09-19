@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.SentimentSatisfiedAlt
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SpaceBar
+import androidx.compose.material.icons.filled.Spellcheck
 import androidx.compose.ui.graphics.vector.ImageVector
 import dev.patrickgold.florisboard.FlorisImeService
 import dev.patrickgold.florisboard.R
@@ -178,6 +179,21 @@ fun ComputingEvaluator.computeLabel(data: KeyData): String? {
             KeyCode.SUGGEST -> {
                 evaluator.context()?.getString(R.string.quick_action__suggest)
             }
+            KeyCode.GRAMMAR -> {
+                evaluator.context()?.getString(R.string.quick_action__grammar)
+            }
+            KeyCode.REWRITE -> {
+                evaluator.context()?.getString(R.string.quick_action__rewrite)
+            }
+            KeyCode.TRANSLATE -> {
+                evaluator.context()?.getString(R.string.quick_action__translate)
+            }
+            KeyCode.DETECT_AI -> {
+                evaluator.context()?.getString(R.string.quick_action__detect)
+            }
+            KeyCode.HUMANIZE -> {
+                evaluator.context()?.getString(R.string.quick_action__humanize)
+            }
             else -> null
         }
     }
@@ -274,6 +290,21 @@ fun ComputingEvaluator.computeImageVector(data: KeyData): ImageVector? {
         }
         KeyCode.SUGGEST -> {
             Icons.Default.AutoAwesome
+        }
+        KeyCode.GRAMMAR -> {
+            Icons.Default.Spellcheck
+        }
+        KeyCode.REWRITE -> {
+            Icons.Default.Settings
+        }
+        KeyCode.TRANSLATE -> {
+            Icons.Default.Language
+        }
+        KeyCode.DETECT_AI -> {
+            Icons.Default.Search
+        }
+        KeyCode.HUMANIZE -> {
+            Icons.Default.SentimentSatisfiedAlt
         }
         KeyCode.SHIFT -> {
             when (evaluator.state.inputShiftState != InputShiftState.UNSHIFTED) {

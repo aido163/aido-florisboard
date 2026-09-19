@@ -161,6 +161,23 @@ val FlorisImeThemeBaseStyle = SnyggStylesheet.v2 {
         foreground = `var`("--on-primary")
         textMaxLines = textMaxLines(1)
     }
+    FlorisImeUi.SmartbarActionKey.elementName(FlorisImeUi.Attr.Code to listOf(KeyCode.GRAMMAR)) {
+        background = `var`("--surface")
+        foreground = `var`("--on-surface")
+        fontSize = fontSize(13.sp)
+        padding = padding(8.dp)
+        shape = roundedCornerShape(16.dp)
+        textMaxLines = textMaxLines(1)
+        textOverflow = textOverflow(TextOverflow.Ellipsis)
+    }
+    FlorisImeUi.SmartbarActionKey.elementName(
+        FlorisImeUi.Attr.Code to listOf(KeyCode.GRAMMAR),
+        selector = SnyggSelector.PRESSED,
+    ) {
+        background = `var`("--surface-variant")
+        foreground = `var`("--on-surface")
+        textMaxLines = textMaxLines(1)
+    }
     FlorisImeUi.SmartbarActionKey.elementName(selector = SnyggSelector.DISABLED) {
         foreground = `var`("--on-background-disabled")
     }

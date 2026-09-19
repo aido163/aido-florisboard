@@ -144,6 +144,7 @@ data class TextKeyData(
                 IME_HIDE_UI,
                 SETTINGS,
                 SUGGEST,
+                GRAMMAR,
                 VOICE_INPUT,
                 TOGGLE_SMARTBAR_VISIBILITY,
                 TOGGLE_ACTIONS_OVERFLOW,
@@ -500,6 +501,41 @@ data class TextKeyData(
             type = KeyType.SYSTEM_GUI,
             code = KeyCode.SUGGEST,
             label = "suggest",
+        )
+
+        /** Predefined key data for [KeyCode.GRAMMAR] */
+        val GRAMMAR = TextKeyData(
+            type = KeyType.SYSTEM_GUI,
+            code = KeyCode.GRAMMAR,
+            label = "grammar",
+        )
+
+        /** Predefined key data for [KeyCode.REWRITE] */
+        val REWRITE = TextKeyData(
+            type = KeyType.SYSTEM_GUI,
+            code = KeyCode.REWRITE,
+            label = "rewrite",
+        )
+
+        /** Predefined key data for [KeyCode.TRANSLATE] */
+        val TRANSLATE = TextKeyData(
+            type = KeyType.SYSTEM_GUI,
+            code = KeyCode.TRANSLATE,
+            label = "translate",
+        )
+
+        /** Predefined key data for [KeyCode.DETECT_AI] */
+        val DETECT_AI = TextKeyData(
+            type = KeyType.SYSTEM_GUI,
+            code = KeyCode.DETECT_AI,
+            label = "detect",
+        )
+
+        /** Predefined key data for [KeyCode.HUMANIZE] */
+        val HUMANIZE = TextKeyData(
+            type = KeyType.SYSTEM_GUI,
+            code = KeyCode.HUMANIZE,
+            label = "humanize",
         )
 
         /** Predefined key data for [KeyCode.VOICE_INPUT] */

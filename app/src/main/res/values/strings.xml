@@ -85,6 +85,16 @@
     <string name="quick_action__settings__tooltip">Open settings</string>
     <string name="quick_action__suggest" comment="Please mind the limited available space for the quick action strings">Suggest</string>
     <string name="quick_action__suggest__tooltip">Suggest AI replies from the visible chat</string>
+    <string name="quick_action__grammar" comment="Please mind the limited available space for the quick action strings">Grammar</string>
+    <string name="quick_action__grammar__tooltip">Fix grammar in the text you already typed</string>
+    <string name="quick_action__rewrite" comment="Please mind the limited available space for the quick action strings">Rewrite</string>
+    <string name="quick_action__rewrite__tooltip">Same meaning, different energy</string>
+    <string name="quick_action__translate" comment="Please mind the limited available space for the quick action strings">Translate</string>
+    <string name="quick_action__translate__tooltip">English, Hinglish, or keep your mix</string>
+    <string name="quick_action__detect" comment="Please mind the limited available space for the quick action strings">Detect</string>
+    <string name="quick_action__detect__tooltip">Catch assistant-sounding writing</string>
+    <string name="quick_action__humanize" comment="Please mind the limited available space for the quick action strings">Humanize</string>
+    <string name="quick_action__humanize__tooltip">Make it sound like a text, not a draft</string>
     <string name="quick_action__undo" comment="Please mind the limited available space for the quick action strings">Undo</string>
     <string name="quick_action__undo__tooltip">Undo the last input</string>
     <string name="quick_action__redo" comment="Please mind the limited available space for the quick action strings">Redo</string>

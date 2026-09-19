@@ -259,6 +259,9 @@ class NlpManager(context: Context) {
     fun isPinnedPending(candidate: SuggestionCandidate): Boolean =
         candidate.secondaryText?.toString() == PINNED_PENDING_SECONDARY
 
+    fun isPinnedGrammar(candidate: SuggestionCandidate): Boolean =
+        candidate.secondaryText?.toString() == PINNED_GRAMMAR_SECONDARY
+
     fun clearSuggestions() {
         val reqTime = SystemClock.uptimeMillis()
         runBlocking {
@@ -323,6 +326,7 @@ class NlpManager(context: Context) {
     companion object {
         const val PINNED_AI_SECONDARY = "AI"
         const val PINNED_PENDING_SECONDARY = "wait"
+        const val PINNED_GRAMMAR_SECONDARY = "grammar"
     }
 
     fun autoExpandCollapseSmartbarActions(list1: List<*>?, list2: List<*>?) {

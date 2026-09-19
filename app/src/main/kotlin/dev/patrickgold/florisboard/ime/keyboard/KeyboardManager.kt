@@ -290,6 +290,14 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         if (nlpManager.isPinnedPending(candidate)) {
             return
         }
+        if (nlpManager.isPinnedGrammar(candidate)) {
+            nlpManager.clearPinnedSuggestions()
+            val accepted = (appContext as? FlorisApplication)
+                ?.onHostGrammarChipAccepted(candidate.text.toString()) == true
+            if (accepted) {
+                return
+            }
+        }
         nlpManager.clearPinnedSuggestions()
         scope.launch {
             candidate.sourceProvider?.notifySuggestionAccepted(subtypeManager.activeSubtype, candidate)
@@ -704,6 +712,26 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         // do not need floating-window actions.
         if (data.code == KeyCode.SUGGEST) {
             (appContext as? FlorisApplication)?.onHostSuggestRequested()
+            return@batchEdit
+        }
+        if (data.code == KeyCode.GRAMMAR) {
+            (appContext as? FlorisApplication)?.onHostGrammarRequested()
+            return@batchEdit
+        }
+        if (data.code == KeyCode.REWRITE) {
+            (appContext as? FlorisApplication)?.onHostRewriteRequested()
+            return@batchEdit
+        }
+        if (data.code == KeyCode.TRANSLATE) {
+            (appContext as? FlorisApplication)?.onHostTranslateRequested()
+            return@batchEdit
+        }
+        if (data.code == KeyCode.DETECT_AI) {
+            (appContext as? FlorisApplication)?.onHostDetectAiRequested()
+            return@batchEdit
+        }
+        if (data.code == KeyCode.HUMANIZE) {
+            (appContext as? FlorisApplication)?.onHostHumanizeRequested()
             return@batchEdit
         }
         val windowController = FlorisImeService.windowControllerOrNull() ?: return@batchEdit
