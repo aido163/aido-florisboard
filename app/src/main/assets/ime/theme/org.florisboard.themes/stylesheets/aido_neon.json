@@ -107,6 +107,10 @@
   "key[code=-205]": {
     "text-max-lines": "2"
   },
+  "key[code=-233]": {
+    "background": "var(--background-variant)",
+    "foreground": "var(--on-surface-variant)"
+  },
   "key[code=-11]": {
     "background": "transparent",
     "foreground": "var(--primary)",
@@ -159,7 +163,9 @@
   "smartbar-shared-actions-toggle": {
     "background": "var(--surface)",
     "foreground": "var(--on-surface)",
-    "margin": "6dp",
+    "border-color": "var(--surface-variant)",
+    "border-width": "1dp",
+    "margin": "0dp",
     "shape": "circle()"
   },
   "smartbar-extended-actions-toggle": {
@@ -184,7 +190,8 @@
     "background": "var(--primary)",
     "foreground": "var(--on-primary)",
     "font-size": "12sp",
-    "padding": "10dp 6dp",
+    "font-weight": "bold",
+    "padding": "10dp 0dp",
     "shape": "var(--shape-chip)",
     "text-max-lines": "1"
   },
@@ -195,12 +202,12 @@
   },
 
   "smartbar-action-key[code=-303]": {
-    "background": "transparent",
+    "background": "var(--surface)",
     "foreground": "var(--on-surface)",
-    "border-color": "var(--on-surface-variant)",
+    "border-color": "var(--surface-variant)",
     "border-width": "1dp",
     "font-size": "12sp",
-    "padding": "10dp 6dp",
+    "padding": "10dp 0dp",
     "shape": "var(--shape-chip)",
     "text-max-lines": "1"
   },
@@ -210,12 +217,12 @@
     "text-max-lines": "1"
   },
   "smartbar-action-key[code=-304]": {
-    "background": "transparent",
+    "background": "var(--surface)",
     "foreground": "var(--on-surface)",
-    "border-color": "var(--on-surface-variant)",
+    "border-color": "var(--surface-variant)",
     "border-width": "1dp",
     "font-size": "12sp",
-    "padding": "10dp 6dp",
+    "padding": "10dp 0dp",
     "shape": "var(--shape-chip)",
     "text-max-lines": "1"
   },
@@ -225,12 +232,12 @@
     "text-max-lines": "1"
   },
   "smartbar-action-key[code=-305]": {
-    "background": "transparent",
+    "background": "var(--surface)",
     "foreground": "var(--on-surface)",
-    "border-color": "var(--on-surface-variant)",
+    "border-color": "var(--surface-variant)",
     "border-width": "1dp",
     "font-size": "12sp",
-    "padding": "10dp 6dp",
+    "padding": "10dp 0dp",
     "shape": "var(--shape-chip)",
     "text-max-lines": "1"
   },
@@ -240,12 +247,12 @@
     "text-max-lines": "1"
   },
   "smartbar-action-key[code=-306]": {
-    "background": "transparent",
+    "background": "var(--surface)",
     "foreground": "var(--on-surface)",
-    "border-color": "var(--on-surface-variant)",
+    "border-color": "var(--surface-variant)",
     "border-width": "1dp",
     "font-size": "12sp",
-    "padding": "10dp 6dp",
+    "padding": "10dp 0dp",
     "shape": "var(--shape-chip)",
     "text-max-lines": "1"
   },
@@ -255,12 +262,12 @@
     "text-max-lines": "1"
   },
   "smartbar-action-key[code=-307]": {
-    "background": "transparent",
+    "background": "var(--surface)",
     "foreground": "var(--on-surface)",
-    "border-color": "var(--on-surface-variant)",
+    "border-color": "var(--surface-variant)",
     "border-width": "1dp",
     "font-size": "12sp",
-    "padding": "10dp 6dp",
+    "padding": "10dp 0dp",
     "shape": "var(--shape-chip)",
     "text-max-lines": "1"
   },
@@ -272,7 +279,9 @@
 
 
   "smartbar-actions-overflow": {
-    "margin": "4dp"
+    "background": "var(--background)",
+    "margin": "0dp",
+    "padding": "12dp"
   },
   "smartbar-actions-overflow-customize-button": {
     "background": "var(--primary)",
@@ -282,18 +291,23 @@
     "shape": "rounded-corner(24dp, 24dp, 24dp, 24dp)"
   },
   "smartbar-action-tile": {
-    "background": "var(--background-variant)",
-    "foreground": "var(--on-background)",
-    "font-size": "14sp",
-    "margin": "4dp",
-    "padding": "4dp",
-    "shape": "rounded-corner(20%, 20%, 20%, 20%)",
-    "text-align": "center",
-    "text-max-lines": "2",
+    "background": "var(--surface)",
+    "foreground": "var(--on-surface)",
+    "font-size": "15sp",
+    "margin": "0dp",
+    "padding": "20dp 12dp",
+    "shape": "rounded-corner(18dp, 18dp, 18dp, 18dp)",
+    "text-align": "start",
+    "text-max-lines": "3",
     "text-overflow": "ellipsis"
   },
+  "smartbar-action-tile:pressed": {
+    "background": "var(--primary)",
+    "foreground": "var(--on-primary)"
+  },
   "smartbar-action-tile:disabled": {
-    "foreground": "var(--on-background-disabled)"
+    "background": "var(--surface)",
+    "foreground": "var(--on-surface-variant)"
   },
   "smartbar-action-tile-icon": {
     "font-size": "24sp",

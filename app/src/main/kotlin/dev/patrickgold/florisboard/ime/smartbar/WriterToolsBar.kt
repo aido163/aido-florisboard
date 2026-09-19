@@ -25,13 +25,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.runtime.Composable
@@ -40,20 +39,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.FlorisApplication
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.ime.input.LocalInputFeedbackController
-import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.text.key.KeyCode
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyData
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import org.florisboard.lib.compose.stringRes
 import org.florisboard.lib.snygg.SnyggSelector
+import org.florisboard.lib.snygg.ui.SnyggBox
 import org.florisboard.lib.snygg.ui.SnyggIcon
-import org.florisboard.lib.snygg.ui.SnyggIconButton
 import org.florisboard.lib.snygg.ui.SnyggRow
 import org.florisboard.lib.snygg.ui.SnyggText
 
@@ -61,6 +60,12 @@ internal data class WriterBarAction(
     val data: TextKeyData,
     val labelRes: Int,
 )
+
+/** Stitch smartbar: 34dp ghost pills, 40dp back, compact selected variant. */
+internal const val WriterChipHeightDp = 34
+internal const val WriterSelectedChipHeightDp = 32
+internal const val WriterBackSizeDp = 40
+internal const val WriterLampSizeDp = 6
 
 /** Draft transforms. Nested children live in [WriterNav]. Suggest stays a chat overlay. */
 internal val WriterBarTools = listOf(
@@ -120,7 +125,8 @@ fun WriterToolsBar(
         label: String,
         code: Int,
         onClick: () -> Unit,
-        weight: Float = 1f,
+        fill: Boolean = true,
+        lamp: Boolean = false,
     ) {
         val inputFeedbackController = LocalInputFeedbackController.current
         val interactionSource = remember { MutableInteractionSource() }
@@ -128,15 +134,19 @@ fun WriterToolsBar(
         val elementName = FlorisImeUi.SmartbarActionKey.elementName
         val attributes = mapOf(FlorisImeUi.Attr.Code to code)
         val selector = if (isPressed) SnyggSelector.PRESSED else null
+        val chipModifier = if (fill) {
+            Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .height(WriterChipHeightDp.dp)
+        } else {
+            Modifier.height(WriterSelectedChipHeightDp.dp)
+        }
         SnyggRow(
             elementName = elementName,
             attributes = attributes,
             selector = selector,
-            modifier = Modifier
-                .weight(weight)
-                .fillMaxWidth()
-                .fillMaxHeight()
-                .padding(vertical = 5.dp),
+            modifier = chipModifier,
             clickAndSemanticsModifier = Modifier
                 .indication(interactionSource, LocalIndication.current)
                 .pointerInput(code, label) {
@@ -157,8 +167,20 @@ fun WriterToolsBar(
                     }
                 },
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
+            horizontalArrangement = if (lamp) {
+                Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally)
+            } else {
+                Arrangement.Center
+            },
         ) {
+            if (lamp) {
+                SnyggBox(
+                    elementName = FlorisImeUi.WindowResizeHandle.elementName,
+                    modifier = Modifier
+                        .size(WriterLampSizeDp.dp)
+                        .clip(CircleShape),
+                ) { }
+            }
             SnyggText(
                 elementName = "$elementName-text",
                 attributes = attributes,
@@ -170,10 +192,34 @@ fun WriterToolsBar(
 
     @Composable
     fun WriterBackButton() {
-        SnyggIconButton(
+        val inputFeedbackController = LocalInputFeedbackController.current
+        val interactionSource = remember { MutableInteractionSource() }
+        val isPressed by interactionSource.collectIsPressedAsState()
+        val selector = if (isPressed) SnyggSelector.PRESSED else null
+        SnyggBox(
             elementName = FlorisImeUi.SmartbarSharedActionsToggle.elementName,
-            onClick = { fireBack() },
-            modifier = Modifier.sizeIn(maxHeight = FlorisImeSizing.smartbarHeight).aspectRatio(1f),
+            selector = selector,
+            modifier = Modifier.size(WriterBackSizeDp.dp),
+            contentAlignment = Alignment.Center,
+            clickAndSemanticsModifier = Modifier
+                .indication(interactionSource, LocalIndication.current)
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        val down = awaitFirstDown()
+                        down.consume()
+                        val press = PressInteraction.Press(down.position)
+                        inputFeedbackController.keyPress(TextKeyData.UNSPECIFIED)
+                        interactionSource.tryEmit(press)
+                        val up = waitForUpOrCancellation()
+                        if (up != null) {
+                            up.consume()
+                            interactionSource.tryEmit(PressInteraction.Release(press))
+                            fireBack()
+                        } else {
+                            interactionSource.tryEmit(PressInteraction.Cancel(press))
+                        }
+                    }
+                },
         ) {
             SnyggIcon(imageVector = Icons.AutoMirrored.Default.KeyboardArrowLeft)
         }
@@ -209,23 +255,13 @@ fun WriterToolsBar(
             }
             WriterLayer.RESULTS -> {
                 WriterBackButton()
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    val elementName = FlorisImeUi.SmartbarActionKey.elementName
-                    SnyggText(
-                        elementName = "$elementName-text",
-                        attributes = mapOf(FlorisImeUi.Attr.Code to keyCodeForWriterMode(writerUi.mode)),
-                        text = if (writerUi.thinking) {
-                            stringRes(R.string.writer_tools__thinking)
-                        } else {
-                            writerUi.variant?.label.orEmpty()
-                        },
-                    )
-                }
+                ToolChip(
+                    label = writerUi.variant?.label.orEmpty(),
+                    code = keyCodeForWriterMode(writerUi.mode),
+                    onClick = { },
+                    fill = false,
+                    lamp = true,
+                )
             }
         }
     }

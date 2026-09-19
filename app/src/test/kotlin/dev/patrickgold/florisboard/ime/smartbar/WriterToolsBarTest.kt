@@ -48,4 +48,12 @@ class WriterToolsBarTest : FunSpec({
             hasSuggestionStrip = false,
         ) shouldBe true
     }
+
+    test("stitch smartbar metrics") {
+        WriterChipHeightDp shouldBe 34
+        WriterSelectedChipHeightDp shouldBe 32
+        WriterBackSizeDp shouldBe 40
+        WriterSuggestionRowHeightDp shouldBe 68
+        WriterThinkingRowHeightDp shouldBe 72
+    }
 })

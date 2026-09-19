@@ -28,7 +28,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -47,8 +48,13 @@ import org.florisboard.lib.compose.stringRes
 import org.florisboard.lib.snygg.SnyggSelector
 import org.florisboard.lib.snygg.ui.SnyggBox
 import org.florisboard.lib.snygg.ui.SnyggColumn
+import org.florisboard.lib.snygg.ui.SnyggIcon
 import org.florisboard.lib.snygg.ui.SnyggRow
 import org.florisboard.lib.snygg.ui.SnyggText
+
+/** Stitch suggestion list: 68dp rewrite cards, 72dp thinking card. */
+internal const val WriterSuggestionRowHeightDp = 68
+internal const val WriterThinkingRowHeightDp = 72
 
 /**
  * Vertical rewrite list covering the keys (same overflow slot as the three-dot
@@ -71,9 +77,7 @@ fun WriterSuggestionsPanel(
             .height(FlorisImeSizing.keyboardUiHeight()),
     ) {
         SnyggColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (ui.thinking) {
@@ -81,7 +85,7 @@ fun WriterSuggestionsPanel(
                     text = stringRes(R.string.writer_tools__thinking),
                     enabled = false,
                     onClick = {},
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.height(WriterThinkingRowHeightDp.dp),
                 )
             } else {
                 ui.texts.forEach { text ->
@@ -89,7 +93,7 @@ fun WriterSuggestionsPanel(
                         text = text,
                         enabled = true,
                         onClick = { accept(text) },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.height(WriterSuggestionRowHeightDp.dp),
                     )
                 }
             }
@@ -108,7 +112,11 @@ private fun WriterSuggestionLine(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val elementName = FlorisImeUi.SmartbarActionTile.elementName
-    val selector = if (isPressed && enabled) SnyggSelector.PRESSED else null
+    val selector = when {
+        !enabled -> SnyggSelector.DISABLED
+        isPressed -> SnyggSelector.PRESSED
+        else -> null
+    }
     SnyggRow(
         elementName = elementName,
         selector = selector,
@@ -134,12 +142,21 @@ private fun WriterSuggestionLine(
                 }
             },
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         SnyggText(
             elementName = "$elementName-text",
             selector = selector,
+            modifier = Modifier.weight(1f),
             text = text,
         )
+        if (isPressed && enabled) {
+            SnyggIcon(
+                elementName = FlorisImeUi.SmartbarActionTileIcon.elementName,
+                selector = selector,
+                imageVector = Icons.Default.Check,
+                contentDescription = null,
+            )
+        }
     }
 }

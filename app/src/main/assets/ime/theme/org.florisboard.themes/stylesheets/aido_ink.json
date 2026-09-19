@@ -103,6 +103,10 @@
   "key[code=-205]": {
     "text-max-lines": "2"
   },
+  "key[code=-233]": {
+    "background": "var(--background-variant)",
+    "foreground": "var(--on-surface-variant)"
+  },
   "key[code=-11][shiftstate=`caps_lock`]": {
     "foreground": "var(--secondary)"
   },
