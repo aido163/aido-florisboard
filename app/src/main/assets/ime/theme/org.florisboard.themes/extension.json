@@ -50,6 +50,12 @@
       "label": "Neon",
       "authors": [ "aido" ],
       "isNight": true
+    },
+    {
+      "id": "aido_ink",
+      "label": "Ink",
+      "authors": [ "aido" ],
+      "isNight": true
     }
   ]
 }

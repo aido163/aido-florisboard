@@ -317,6 +317,24 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
         }
     }
 
+    val nestedOpen by keyboardManager.writerToolsNestedOpen.collectAsState()
+    val showWriterBar = smartbarLayout == SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED && !sharedActionsExpanded
+    val mainHeight = if (showWriterBar && nestedOpen) {
+        FlorisImeSizing.smartbarHeight * 2
+    } else {
+        FlorisImeSizing.smartbarHeight
+    }
+
+    if (showWriterBar) {
+        WriterToolsBar(
+            modifier = modifier
+                .fillMaxWidth()
+                .height(mainHeight),
+            leading = { SharedActionsToggle() },
+        )
+        return
+    }
+
     SnyggRow(
         modifier = modifier
             .fillMaxWidth()

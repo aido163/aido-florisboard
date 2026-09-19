@@ -95,6 +95,37 @@
     <string name="quick_action__detect__tooltip">Catch assistant-sounding writing</string>
     <string name="quick_action__humanize" comment="Please mind the limited available space for the quick action strings">Humanize</string>
     <string name="quick_action__humanize__tooltip">Make it sound like a text, not a draft</string>
+    <string name="writer_tools__fix">Fix</string>
+    <string name="writer_tools__reply">Reply</string>
+    <string name="writer_tools__continue">Continue</string>
+    <string name="writer_tools__ideas">Ideas</string>
+    <string name="writer_tools__warm">Warm</string>
+    <string name="writer_tools__short">Short</string>
+    <string name="writer_tools__spelling">Spelling</string>
+    <string name="writer_tools__tighten">Tighten</string>
+    <string name="writer_tools__detect_ai">Detect AI</string>
+    <string name="writer_tools__faithful">Faithful</string>
+    <string name="writer_tools__tighter">Tighter</string>
+    <string name="writer_tools__shortest">Shortest</string>
+    <string name="writer_tools__professional">Professional</string>
+    <string name="writer_tools__casual">Casual</string>
+    <string name="writer_tools__shorter">Shorter</string>
+    <string name="writer_tools__longer">Longer</string>
+    <string name="writer_tools__simpler">Simpler</string>
+    <string name="writer_tools__like_a_text">Like a text</string>
+    <string name="writer_tools__warmer">Warmer</string>
+    <string name="writer_tools__less_ai">Less AI</string>
+    <string name="writer_tools__punchier">Punchier</string>
+    <string name="writer_tools__hinglish">Hinglish</string>
+    <string name="writer_tools__hindi">Hindi</string>
+    <string name="writer_tools__spanish">Spanish</string>
+    <string name="writer_tools__french">French</string>
+    <string name="writer_tools__more">More</string>
+    <string name="writer_tools__german">German</string>
+    <string name="writer_tools__japanese">Japanese</string>
+    <string name="writer_tools__portuguese">Portuguese</string>
+    <string name="writer_tools__arabic">Arabic</string>
+    <string name="writer_tools__back">Back</string>
     <string name="quick_action__undo" comment="Please mind the limited available space for the quick action strings">Undo</string>
     <string name="quick_action__undo__tooltip">Undo the last input</string>
     <string name="quick_action__redo" comment="Please mind the limited available space for the quick action strings">Redo</string>

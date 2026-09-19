@@ -161,7 +161,21 @@ val FlorisImeThemeBaseStyle = SnyggStylesheet.v2 {
         foreground = `var`("--on-primary")
         textMaxLines = textMaxLines(1)
     }
-    FlorisImeUi.SmartbarActionKey.elementName(FlorisImeUi.Attr.Code to listOf(KeyCode.GRAMMAR)) {
+    FlorisImeUi.SmartbarActionKey.elementName(
+        FlorisImeUi.Attr.Code to listOf(KeyCode.SUGGEST),
+        selector = SnyggSelector.FOCUS,
+    ) {
+        background = `var`("--primary-variant")
+        foreground = `var`("--on-primary")
+        textMaxLines = textMaxLines(1)
+    }
+    FlorisImeUi.SmartbarActionKey.elementName(FlorisImeUi.Attr.Code to listOf(
+        KeyCode.GRAMMAR,
+        KeyCode.REWRITE,
+        KeyCode.TRANSLATE,
+        KeyCode.DETECT_AI,
+        KeyCode.HUMANIZE,
+    )) {
         background = `var`("--surface")
         foreground = `var`("--on-surface")
         fontSize = fontSize(13.sp)
@@ -171,8 +185,28 @@ val FlorisImeThemeBaseStyle = SnyggStylesheet.v2 {
         textOverflow = textOverflow(TextOverflow.Ellipsis)
     }
     FlorisImeUi.SmartbarActionKey.elementName(
-        FlorisImeUi.Attr.Code to listOf(KeyCode.GRAMMAR),
+        FlorisImeUi.Attr.Code to listOf(
+            KeyCode.GRAMMAR,
+            KeyCode.REWRITE,
+            KeyCode.TRANSLATE,
+            KeyCode.DETECT_AI,
+            KeyCode.HUMANIZE,
+        ),
         selector = SnyggSelector.PRESSED,
+    ) {
+        background = `var`("--surface-variant")
+        foreground = `var`("--on-surface")
+        textMaxLines = textMaxLines(1)
+    }
+    FlorisImeUi.SmartbarActionKey.elementName(
+        FlorisImeUi.Attr.Code to listOf(
+            KeyCode.GRAMMAR,
+            KeyCode.REWRITE,
+            KeyCode.TRANSLATE,
+            KeyCode.DETECT_AI,
+            KeyCode.HUMANIZE,
+        ),
+        selector = SnyggSelector.FOCUS,
     ) {
         background = `var`("--surface-variant")
         foreground = `var`("--on-surface")

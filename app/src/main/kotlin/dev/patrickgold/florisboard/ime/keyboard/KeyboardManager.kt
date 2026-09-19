@@ -99,6 +99,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
 
     val resources = KeyboardManagerResources()
     val activeState = ObservableKeyboardState.new()
+    val writerToolsNestedOpen = MutableStateFlow(false)
     var smartbarVisibleDynamicActionsCount by mutableIntStateOf(0)
     private var lastToastReference = WeakReference<Toast>(null)
 
