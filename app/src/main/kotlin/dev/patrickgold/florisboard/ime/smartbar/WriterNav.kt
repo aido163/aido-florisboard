@@ -46,10 +46,10 @@ data class WriterUi(
 ) {
     val nestedOpen: Boolean get() = layer != WriterLayer.TOOLS
 
-    /** Suggest covers smartbar + keys in place. Rewrite/fix still cover keys only. */
-    val coversIme: Boolean get() = mode == "suggest" && layer == WriterLayer.RESULTS
+    /** RESULTS (Suggest and writer transforms) cover smartbar + keys in place. */
+    val coversIme: Boolean get() = layer == WriterLayer.RESULTS
 
-    val coversKeys: Boolean get() = layer == WriterLayer.RESULTS && mode != "suggest"
+    val coversKeys: Boolean get() = false
 }
 
 object WriterNav {

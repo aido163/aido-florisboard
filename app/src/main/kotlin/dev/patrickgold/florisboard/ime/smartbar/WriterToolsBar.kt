@@ -67,7 +67,7 @@ internal const val WriterSelectedChipHeightDp = 32
 internal const val WriterBackSizeDp = 40
 internal const val WriterLampSizeDp = 6
 
-/** Draft transforms. Nested children live in [WriterNav]. Suggest opens RESULTS. */
+/** Draft transforms. Nested children live in [WriterNav]. RESULTS cover the IME. */
 internal val WriterBarTools = listOf(
     WriterBarAction(TextKeyData.GRAMMAR, R.string.writer_tools__fix),
     WriterBarAction(TextKeyData.REWRITE, R.string.quick_action__rewrite),

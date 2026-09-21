@@ -163,8 +163,9 @@ open class FlorisApplication : Application() {
     open fun onHostGrammarChipAccepted(text: String): Boolean = false
 
     /**
-     * Host paints the shared assistant Suggest sheet over smartbar + keys.
-     * Null falls back to [dev.patrickgold.florisboard.ime.smartbar.WriterSuggestionsPanel].
+     * Host paints the shared assistant sheet over smartbar + keys for
+     * Suggest and writer RESULTS. Null falls back to
+     * [dev.patrickgold.florisboard.ime.smartbar.WriterSuggestionsPanel].
      */
     @Volatile
     var hostSuggestSheet: HostSuggestSheetRenderer? = null

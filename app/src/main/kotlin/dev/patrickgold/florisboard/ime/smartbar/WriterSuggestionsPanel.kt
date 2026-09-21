@@ -59,9 +59,9 @@ internal const val WriterSuggestionRowHeightDp = 68
 internal const val WriterThinkingRowHeightDp = 72
 
 /**
- * Vertical rewrite list. Writer transforms cover the keys. Suggest covers
- * the whole IME (smartbar + keys) via the host assistant sheet; this panel
- * is the fallback if that sheet is not bound.
+ * Vertical rewrite list. Suggest and writer RESULTS cover the whole IME
+ * via the host assistant sheet; this panel is the fallback if that sheet
+ * is not bound.
  */
 @Composable
 fun WriterSuggestionsPanel(
