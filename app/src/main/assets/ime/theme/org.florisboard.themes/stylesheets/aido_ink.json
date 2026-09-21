@@ -22,7 +22,7 @@
     "--on-surface": "#FFFFFF",
     "--on-surface-variant": "#ADAFBB",
 
-    "--shape": "rounded-corner(12dp, 12dp, 12dp, 12dp)",
+    "--shape": "rounded-corner(4dp, 4dp, 4dp, 4dp)",
     "--shape-variant": "rounded-corner(18dp, 18dp, 18dp, 18dp)",
     "--shape-chip": "rounded-corner(50%, 50%, 50%, 50%)"
   },
@@ -69,7 +69,7 @@
     "font-weight": "normal",
     "shape": "var(--shape)",
     "shadow-elevation": "0dp",
-    "margin": "2.5dp",
+    "margin": "0.5dp",
     "text-max-lines": "1"
   },
   "key:pressed": {
@@ -102,13 +102,23 @@
     "background": "var(--surface-variant)",
     "foreground": "var(--on-surface)"
   },
-  "key[code=44,46]": {
+  "key[code=44]": {
     "background": "var(--background-variant)",
     "foreground": "var(--on-surface)"
   },
-  "key[code=44,46]:pressed": {
+  "key[code=44]:pressed": {
     "background": "var(--surface-variant)",
     "foreground": "var(--on-surface)"
+  },
+  "key[code=46]": {
+    "background": "var(--primary)",
+    "foreground": "var(--on-primary)",
+    "font-size": "22sp",
+    "shape": "circle()"
+  },
+  "key[code=46]:pressed": {
+    "background": "var(--primary-variant)",
+    "foreground": "var(--on-primary)"
   },
   "key[code=-201,-202,-203]": {
     "font-size": "12sp"

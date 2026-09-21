@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The FlorisBoard Contributors
+ * Copyright (C) 2026 The FlorisBoard Contributors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,13 @@
 
 package dev.patrickgold.florisboard.ime.keyboard
 
-enum class SpaceBarMode {
-    NOTHING,
-    CURRENT_LANGUAGE,
-    SPACE_BAR_KEY;
-}
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 
-/** Spacebar shows the product name instead of the subtype language. */
-internal const val SpaceBarBrandLabel = "AIDO"
-
-internal fun spaceBarDisplayLabel(mode: SpaceBarMode): String? = when (mode) {
-    SpaceBarMode.NOTHING -> null
-    SpaceBarMode.CURRENT_LANGUAGE,
-    SpaceBarMode.SPACE_BAR_KEY -> SpaceBarBrandLabel
-}
+class SpaceBarModeTest : FunSpec({
+    test("space bar shows AIDO instead of the language name") {
+        spaceBarDisplayLabel(SpaceBarMode.CURRENT_LANGUAGE) shouldBe "AIDO"
+        spaceBarDisplayLabel(SpaceBarMode.SPACE_BAR_KEY) shouldBe "AIDO"
+        spaceBarDisplayLabel(SpaceBarMode.NOTHING) shouldBe null
+    }
+})

@@ -85,7 +85,7 @@
     <string name="quick_action__settings__tooltip">Open settings</string>
     <string name="quick_action__suggest" comment="Please mind the limited available space for the quick action strings">suggest</string>
     <string name="quick_action__suggest__tooltip">suggest replies from this chat</string>
-    <string name="quick_action__grammar" comment="Please mind the limited available space for the quick action strings">fix</string>
+    <string name="quick_action__grammar" comment="Please mind the limited available space for the quick action strings">fix grammar</string>
     <string name="quick_action__grammar__tooltip">fix grammar in what you already typed</string>
     <string name="quick_action__rewrite" comment="Please mind the limited available space for the quick action strings">rewrite</string>
     <string name="quick_action__rewrite__tooltip">same point, different energy</string>
@@ -95,7 +95,7 @@
     <string name="quick_action__detect__tooltip">catch assistant-sounding writing</string>
     <string name="quick_action__humanize" comment="Please mind the limited available space for the quick action strings">humanize</string>
     <string name="quick_action__humanize__tooltip">make it sound like a text, not a draft</string>
-    <string name="writer_tools__fix">fix</string>
+    <string name="writer_tools__fix">fix grammar</string>
     <string name="writer_tools__thinking">thinking…</string>
     <string name="quick_action__undo" comment="Please mind the limited available space for the quick action strings">Undo</string>
     <string name="quick_action__undo__tooltip">Undo the last input</string>

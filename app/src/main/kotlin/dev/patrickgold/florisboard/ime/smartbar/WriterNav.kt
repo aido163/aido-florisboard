@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.update
 
 /**
  * Nested writer-tool navigation: tools → child chips → result list.
- * Suggest skips VARIANTS and opens RESULTS thinking on the same stack.
+ * Suggest and grammar skip VARIANTS and open RESULTS thinking on the same stack.
  */
 enum class WriterLayer {
     TOOLS,
@@ -53,44 +53,87 @@ data class WriterUi(
 }
 
 object WriterNav {
+    val DEFAULT_TRANSLATE: List<WriterVariant> = listOf(
+        WriterVariant("english", "english"),
+        WriterVariant("hindi", "hindi"),
+        WriterVariant("hinglish", "hinglish"),
+    )
+
+    val DEFAULT_REWRITE: List<WriterVariant> = listOf(
+        WriterVariant("warm", "warm"),
+        WriterVariant("humor", "humor"),
+        WriterVariant("professional", "professional"),
+    )
+
+    val DEFAULT_HUMANIZE: List<WriterVariant> = listOf(
+        WriterVariant("natural", "natural"),
+        WriterVariant("shorter", "shorter"),
+        WriterVariant("casual", "casual"),
+    )
+
+    @Volatile
+    private var translateVariants: List<WriterVariant> = DEFAULT_TRANSLATE
+
+    @Volatile
+    private var rewriteVariants: List<WriterVariant> = DEFAULT_REWRITE
+
+    @Volatile
+    private var humanizeVariants: List<WriterVariant> = DEFAULT_HUMANIZE
+
+    fun setTranslateLanguages(ids: List<String>) {
+        translateVariants = variantsFromIds(ids, DEFAULT_TRANSLATE)
+    }
+
+    fun setRewriteStyles(ids: List<String>) {
+        rewriteVariants = variantsFromIds(ids, DEFAULT_REWRITE)
+    }
+
+    fun setHumanizeStyles(ids: List<String>) {
+        humanizeVariants = variantsFromIds(ids, DEFAULT_HUMANIZE)
+    }
+
     fun variantsFor(mode: String): List<WriterVariant> = when (mode) {
-        "grammar" -> listOf(
-            WriterVariant("keep", "keep"),
-            WriterVariant("tighter", "tighter"),
-            WriterVariant("shortest", "shortest"),
-        )
-        "rewrite" -> listOf(
-            WriterVariant("warm", "warm"),
-            WriterVariant("humor", "humor"),
-            WriterVariant("professional", "professional"),
-        )
-        "translate" -> listOf(
-            WriterVariant("english", "english"),
-            WriterVariant("hinglish", "hinglish"),
-            WriterVariant("keep", "keep"),
-        )
-        "humanize" -> listOf(
-            WriterVariant("natural", "natural"),
-            WriterVariant("shorter", "shorter"),
-            WriterVariant("casual", "casual"),
-        )
+        "rewrite" -> rewriteVariants
+        "translate" -> translateVariants
+        "humanize" -> humanizeVariants
         else -> emptyList()
     }
 
+    private fun variantsFromIds(
+        ids: List<String>,
+        fallback: List<WriterVariant>,
+    ): List<WriterVariant> {
+        val next = ids.map { it.trim().lowercase() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+            .take(8)
+            .map { WriterVariant(it, it) }
+        return next.ifEmpty { fallback }
+    }
+
+    fun skipsVariants(mode: String): Boolean = variantsFor(mode).isEmpty()
+
+    /** Grammar and translate replace the draft; rewrite / humanize keep a chip list. */
+    fun autoReplacesDraft(mode: String): Boolean =
+        mode == "grammar" || mode == "translate"
+
     fun openVariants(mode: String): WriterUi {
-        if (variantsFor(mode).isEmpty()) return WriterUi()
+        if (skipsVariants(mode)) return WriterUi()
         return WriterUi(layer = WriterLayer.VARIANTS, mode = mode)
     }
 
-    /** Suggest has no child chips — RESULTS thinking, then the vertical list. */
-    fun startSuggest(): WriterUi =
+    /** Suggest / grammar have no child chips — RESULTS thinking, then the list. */
+    fun startResults(mode: String, variant: WriterVariant): WriterUi =
         WriterUi(
             layer = WriterLayer.RESULTS,
-            mode = "suggest",
-            variant = WriterVariant("suggest", "suggest"),
+            mode = mode,
+            variant = variant,
             texts = emptyList(),
             thinking = true,
         )
+
+    fun startSuggest(): WriterUi =
+        startResults("suggest", WriterVariant("suggest", "suggest"))
 
     fun startFetch(current: WriterUi, variant: WriterVariant): WriterUi {
         if (current.layer == WriterLayer.TOOLS || current.mode.isBlank()) return current
@@ -103,7 +146,11 @@ object WriterNav {
     }
 
     fun showResults(current: WriterUi, texts: List<String>): WriterUi {
-        val cap = if (current.mode == "suggest") 6 else 3
+        val cap = when (current.mode) {
+            "suggest" -> 6
+            "translate", "grammar" -> 1
+            else -> 3
+        }
         val cleaned = texts.map { it.trim() }.filter { it.isNotEmpty() }.take(cap)
         if (cleaned.isEmpty()) return failFetch(current)
         return current.copy(
@@ -128,13 +175,13 @@ object WriterNav {
     }
 
     fun failFetch(current: WriterUi): WriterUi {
-        if (current.mode.isBlank() || current.mode == "suggest") return WriterUi()
+        if (current.mode.isBlank() || skipsVariants(current.mode)) return WriterUi()
         return WriterUi(layer = WriterLayer.VARIANTS, mode = current.mode)
     }
 
     fun back(current: WriterUi): WriterUi = when (current.layer) {
         WriterLayer.RESULTS ->
-            if (current.mode == "suggest") WriterUi()
+            if (skipsVariants(current.mode)) WriterUi()
             else WriterUi(layer = WriterLayer.VARIANTS, mode = current.mode)
         WriterLayer.VARIANTS -> WriterUi()
         WriterLayer.TOOLS -> WriterUi()

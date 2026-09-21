@@ -68,6 +68,7 @@ import dev.patrickgold.florisboard.ime.keyboard.ComputingEvaluator
 import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.keyboard.KeyboardMode
 import dev.patrickgold.florisboard.ime.keyboard.SpaceBarMode
+import dev.patrickgold.florisboard.ime.keyboard.spaceBarDisplayLabel
 import dev.patrickgold.florisboard.ime.popup.ExceptionsForKeyCodes
 import dev.patrickgold.florisboard.ime.popup.KeyPreviewPopupLayout
 import dev.patrickgold.florisboard.ime.popup.PopupUiController
@@ -336,11 +337,7 @@ private fun TextKeyButton(
             if (key.computedData.code == KeyCode.SPACE) {
                 val prefs by FlorisPreferenceStore
                 val spaceBarMode by prefs.keyboard.spaceBarMode.collectAsState()
-                when (spaceBarMode) {
-                    SpaceBarMode.NOTHING -> return@let
-                    SpaceBarMode.CURRENT_LANGUAGE -> {}
-                    SpaceBarMode.SPACE_BAR_KEY -> customLabel = "␣"
-                }
+                customLabel = spaceBarDisplayLabel(spaceBarMode) ?: return@let
             }
             SnyggText(
                 modifier = Modifier
