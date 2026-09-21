@@ -24,12 +24,15 @@ import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
@@ -67,7 +70,7 @@ internal const val WriterSelectedChipHeightDp = 32
 internal const val WriterBackSizeDp = 40
 internal const val WriterLampSizeDp = 6
 
-/** Draft transforms. Nested children live in [WriterNav]. RESULTS cover the IME. */
+/** Draft transforms. Nested children live in [WriterNav]. Grammar skips children and applies. RESULTS cover the IME. */
 internal val WriterBarTools = listOf(
     WriterBarAction(TextKeyData.GRAMMAR, R.string.writer_tools__fix),
     WriterBarAction(TextKeyData.REWRITE, R.string.quick_action__rewrite),
@@ -84,6 +87,12 @@ internal fun showWriterToolsRow(
     layout: SmartbarLayout,
     hasSuggestionStrip: Boolean,
 ): Boolean = layout == SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED && !hasSuggestionStrip
+
+/** Word completions and pinned grammar/pending share the candidate row. */
+internal fun countsAsSuggestionStrip(
+    pinnedWriter: Boolean,
+    hasWordCompletions: Boolean,
+): Boolean = pinnedWriter || hasWordCompletions
 
 private fun keyCodeForWriterMode(mode: String): Int = when (mode) {
     "grammar" -> KeyCode.GRAMMAR
@@ -246,12 +255,20 @@ fun WriterToolsBar(
             }
             WriterLayer.VARIANTS -> {
                 WriterBackButton()
-                WriterNav.variantsFor(writerUi.mode).forEach { variant ->
-                    ToolChip(
-                        label = variant.label,
-                        code = keyCodeForWriterMode(writerUi.mode),
-                        onClick = { fireVariant(variant) },
-                    )
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    WriterNav.variantsFor(writerUi.mode).forEach { variant ->
+                        ToolChip(
+                            label = variant.label,
+                            code = keyCodeForWriterMode(writerUi.mode),
+                            onClick = { fireVariant(variant) },
+                        )
+                    }
                 }
             }
             WriterLayer.RESULTS -> {

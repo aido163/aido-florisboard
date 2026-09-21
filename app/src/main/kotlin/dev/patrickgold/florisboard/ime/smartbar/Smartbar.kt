@@ -59,6 +59,7 @@ import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.nlp.NlpInlineAutofill
+import dev.patrickgold.florisboard.ime.nlp.WordSuggestionCandidate
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionButton
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionsRow
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.ToggleOverflowPanelAction
@@ -320,7 +321,9 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
     val candidates by nlpManager.activeCandidatesFlow.collectAsState()
     val writerUi by WriterNavStore.ui.collectAsState()
     val showingSuggestionStrip = !writerUi.nestedOpen && candidates.any {
-        nlpManager.isPinnedPending(it) || nlpManager.isPinnedGrammar(it)
+        nlpManager.isPinnedPending(it) ||
+            nlpManager.isPinnedGrammar(it) ||
+            it is WordSuggestionCandidate
     }
     val showWriterBar = writerUi.nestedOpen || showWriterToolsRow(
         layout = smartbarLayout,

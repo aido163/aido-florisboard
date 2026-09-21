@@ -49,6 +49,19 @@ class WriterToolsBarTest : FunSpec({
         ) shouldBe true
     }
 
+    test("word completions count as the suggestion strip") {
+        countsAsSuggestionStrip(pinnedWriter = false, hasWordCompletions = true) shouldBe true
+        countsAsSuggestionStrip(pinnedWriter = true, hasWordCompletions = false) shouldBe true
+        countsAsSuggestionStrip(pinnedWriter = false, hasWordCompletions = false) shouldBe false
+        showWriterToolsRow(
+            layout = SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED,
+            hasSuggestionStrip = countsAsSuggestionStrip(
+                pinnedWriter = false,
+                hasWordCompletions = true,
+            ),
+        ) shouldBe false
+    }
+
     test("stitch smartbar metrics") {
         WriterChipHeightDp shouldBe 34
         WriterSelectedChipHeightDp shouldBe 32
