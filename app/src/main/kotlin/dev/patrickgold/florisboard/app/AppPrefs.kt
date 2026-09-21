@@ -709,7 +709,7 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
     inner class Theme {
         val mode = enum(
             key = "theme__mode",
-            default = ThemeMode.FOLLOW_SYSTEM,
+            default = ThemeMode.ALWAYS_NIGHT,
         )
         val dayThemeId = custom(
             key = "theme__day_theme_id",
@@ -718,7 +718,7 @@ abstract class FlorisPreferenceModel : PreferenceModel() {
         )
         val nightThemeId = custom(
             key = "theme__night_theme_id",
-            default = extCoreTheme("floris_night"),
+            default = extCoreTheme("aido_ink"),
             serializer = ExtensionComponentName.Serializer,
         )
         val accentColor = custom(

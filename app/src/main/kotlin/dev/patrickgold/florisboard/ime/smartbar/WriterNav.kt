@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.update
 
 /**
  * Nested writer-tool navigation: tools → child chips → result list.
- * Suggest/reply is a separate path and never enters this stack.
+ * Suggest skips VARIANTS and opens RESULTS thinking on the same stack.
  */
 enum class WriterLayer {
     TOOLS,
@@ -42,8 +42,14 @@ data class WriterUi(
     val variant: WriterVariant? = null,
     val texts: List<String> = emptyList(),
     val thinking: Boolean = false,
+    val selectable: Boolean = true,
 ) {
     val nestedOpen: Boolean get() = layer != WriterLayer.TOOLS
+
+    /** Suggest covers smartbar + keys in place. Rewrite/fix still cover keys only. */
+    val coversIme: Boolean get() = mode == "suggest" && layer == WriterLayer.RESULTS
+
+    val coversKeys: Boolean get() = layer == WriterLayer.RESULTS && mode != "suggest"
 }
 
 object WriterNav {
@@ -76,6 +82,16 @@ object WriterNav {
         return WriterUi(layer = WriterLayer.VARIANTS, mode = mode)
     }
 
+    /** Suggest has no child chips — RESULTS thinking, then the vertical list. */
+    fun startSuggest(): WriterUi =
+        WriterUi(
+            layer = WriterLayer.RESULTS,
+            mode = "suggest",
+            variant = WriterVariant("suggest", "suggest"),
+            texts = emptyList(),
+            thinking = true,
+        )
+
     fun startFetch(current: WriterUi, variant: WriterVariant): WriterUi {
         if (current.layer == WriterLayer.TOOLS || current.mode.isBlank()) return current
         return current.copy(
@@ -87,22 +103,39 @@ object WriterNav {
     }
 
     fun showResults(current: WriterUi, texts: List<String>): WriterUi {
-        val cleaned = texts.map { it.trim() }.filter { it.isNotEmpty() }.take(3)
+        val cap = if (current.mode == "suggest") 6 else 3
+        val cleaned = texts.map { it.trim() }.filter { it.isNotEmpty() }.take(cap)
         if (cleaned.isEmpty()) return failFetch(current)
         return current.copy(
             layer = WriterLayer.RESULTS,
             texts = cleaned,
             thinking = false,
+            selectable = true,
+        )
+    }
+
+    /** Keep RESULTS with a non-insertable line so Suggest thinking does not vanish. */
+    fun showStatus(current: WriterUi, message: String): WriterUi {
+        val text = message.trim()
+        if (text.isEmpty()) return failFetch(current)
+        if (current.mode != "suggest") return failFetch(current)
+        return current.copy(
+            layer = WriterLayer.RESULTS,
+            texts = listOf(text),
+            thinking = false,
+            selectable = false,
         )
     }
 
     fun failFetch(current: WriterUi): WriterUi {
-        if (current.mode.isBlank()) return WriterUi()
+        if (current.mode.isBlank() || current.mode == "suggest") return WriterUi()
         return WriterUi(layer = WriterLayer.VARIANTS, mode = current.mode)
     }
 
     fun back(current: WriterUi): WriterUi = when (current.layer) {
-        WriterLayer.RESULTS -> WriterUi(layer = WriterLayer.VARIANTS, mode = current.mode)
+        WriterLayer.RESULTS ->
+            if (current.mode == "suggest") WriterUi()
+            else WriterUi(layer = WriterLayer.VARIANTS, mode = current.mode)
         WriterLayer.VARIANTS -> WriterUi()
         WriterLayer.TOOLS -> WriterUi()
     }

@@ -111,6 +111,20 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     val lastCharactersEvaluator: StateFlow<ComputingEvaluator>
         field = MutableStateFlow<ComputingEvaluator>(DefaultComputingEvaluator)
 
+    private val voiceInput = VoiceInputController(appContext) { text ->
+        editorInstance.commitText(text)
+    }
+    val voiceListening: StateFlow<Boolean>
+        get() = voiceInput.listening
+
+    fun toggleVoiceInput() {
+        voiceInput.toggle()
+    }
+
+    fun stopVoiceInput() {
+        voiceInput.stop()
+    }
+
     val inputEventDispatcher = InputEventDispatcher.new(
         repeatableKeyCodes = intArrayOf(
             KeyCode.ARROW_DOWN,
@@ -731,6 +745,10 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             (appContext as? FlorisApplication)?.onHostHumanizeRequested()
             return@batchEdit
         }
+        if (data.code == KeyCode.VOICE_INPUT) {
+            voiceInput.toggle()
+            return@batchEdit
+        }
         val windowController = FlorisImeService.windowControllerOrNull() ?: return@batchEdit
         when (data.code) {
             KeyCode.ARROW_DOWN,
@@ -779,7 +797,6 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             KeyCode.IME_UI_MODE_TEXT -> activeState.imeUiMode = ImeUiMode.TEXT
             KeyCode.IME_UI_MODE_MEDIA -> activeState.imeUiMode = ImeUiMode.MEDIA
             KeyCode.IME_UI_MODE_CLIPBOARD -> activeState.imeUiMode = ImeUiMode.CLIPBOARD
-            KeyCode.VOICE_INPUT -> FlorisImeService.switchToVoiceInputMethod()
             KeyCode.KANA_SWITCHER -> handleKanaSwitch()
             KeyCode.KANA_HIRA -> handleKanaHira()
             KeyCode.KANA_KATA -> handleKanaKata()

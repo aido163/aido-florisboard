@@ -28,6 +28,8 @@ import kotlin.getValue
 
 @Composable
 fun BottomSheetWindow() {
+    // Suggest chips live in TextInputLayout (cover smartbar + keys in place).
+    // Do not host them here — fillMaxSize would float over the host chat.
     val context = LocalContext.current
     val keyboardManager by context.keyboardManager()
     val state by keyboardManager.activeState.collectAsState()

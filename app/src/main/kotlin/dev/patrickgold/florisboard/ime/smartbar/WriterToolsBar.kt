@@ -67,7 +67,7 @@ internal const val WriterSelectedChipHeightDp = 32
 internal const val WriterBackSizeDp = 40
 internal const val WriterLampSizeDp = 6
 
-/** Draft transforms. Nested children live in [WriterNav]. Suggest stays a chat overlay. */
+/** Draft transforms. Nested children live in [WriterNav]. Suggest opens RESULTS. */
 internal val WriterBarTools = listOf(
     WriterBarAction(TextKeyData.GRAMMAR, R.string.writer_tools__fix),
     WriterBarAction(TextKeyData.REWRITE, R.string.quick_action__rewrite),
@@ -91,6 +91,7 @@ private fun keyCodeForWriterMode(mode: String): Int = when (mode) {
     "translate" -> KeyCode.TRANSLATE
     "humanize" -> KeyCode.HUMANIZE
     "detect" -> KeyCode.DETECT_AI
+    "suggest" -> KeyCode.SUGGEST
     else -> KeyCode.UNSPECIFIED
 }
 

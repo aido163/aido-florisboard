@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.height
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.width
+import dev.patrickgold.florisboard.FlorisImeService
 import dev.patrickgold.florisboard.app.FlorisPreferenceModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -157,7 +158,11 @@ class ImeWindowController(
      * Updates the active window insets. Should be called exclusively by [ImeWindow].
      */
     fun updateWindowInsets(newInsets: ImeInsets.Window) {
+        val prev = activeWindowInsets.value
         activeWindowInsets.value = newInsets
+        if (prev?.boundsPx != newInsets.boundsPx) {
+            FlorisImeService.refreshInsets()
+        }
     }
 
     /**

@@ -24,6 +24,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Handler
 import android.util.Log
+import androidx.compose.runtime.Composable
 import androidx.core.os.UserManagerCompat
 import dev.patrickgold.florisboard.app.FlorisPreferenceModel
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
@@ -57,6 +58,16 @@ import java.lang.ref.WeakReference
  * reference is needed, but the Android framework hasn't finished setting up
  */
 private var FlorisApplicationReference = WeakReference<FlorisApplication?>(null)
+
+/**
+ * Host paints the assistant Suggest sheet over smartbar + keys. Must not
+ * start an Activity — that would hide the keyboard and drop field focus.
+ * The sheet covers the IME in place (same height; host app does not resize).
+ */
+fun interface HostSuggestSheetRenderer {
+    @Composable
+    fun Content(onChip: (String) -> Unit, onDismiss: () -> Unit)
+}
 
 @Suppress("unused")
 open class FlorisApplication : Application() {
@@ -109,6 +120,19 @@ open class FlorisApplication : Application() {
     open fun onHostSuggestRequested() {}
 
     /**
+     * Host hook for the keyboard mic key. Launch dictation in the shell
+     * process — SpeechRecognizer inside `:keyboard` binds the stub
+     * [RecognitionService] or fails with ERROR_CLIENT.
+     */
+    open fun onHostVoiceInputRequested() {}
+
+    /**
+     * Text captured by the host dictation activity while the IME was hidden.
+     * Consuming must clear the pending value.
+     */
+    open fun takePendingVoiceDictation(): String? = null
+
+    /**
      * Host hook for the smartbar Fix grammar action. Stays in the IME —
      * rewrites the current field without opening the chat overlay.
      */
@@ -137,6 +161,13 @@ open class FlorisApplication : Application() {
      * host handled the chip (skip default commitCompletion).
      */
     open fun onHostGrammarChipAccepted(text: String): Boolean = false
+
+    /**
+     * Host paints the shared assistant Suggest sheet over smartbar + keys.
+     * Null falls back to [dev.patrickgold.florisboard.ime.smartbar.WriterSuggestionsPanel].
+     */
+    @Volatile
+    var hostSuggestSheet: HostSuggestSheetRenderer? = null
 
     val cacheManager = lazy { CacheManager(this) }
     val clipboardManager = lazy { ClipboardManager(this) }

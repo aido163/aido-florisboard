@@ -16,10 +16,15 @@
 
 package dev.patrickgold.florisboard.ime.text
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardVoice
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,12 +32,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import dev.patrickgold.florisboard.FlorisApplication
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
+import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.InlineSuggestionsStyleCache
 import dev.patrickgold.florisboard.ime.smartbar.Smartbar
-import dev.patrickgold.florisboard.ime.smartbar.WriterLayer
 import dev.patrickgold.florisboard.ime.smartbar.WriterNavStore
 import dev.patrickgold.florisboard.ime.smartbar.WriterSuggestionsPanel
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionsOverflowPanel
@@ -41,6 +48,8 @@ import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import dev.patrickgold.florisboard.keyboardManager
 import dev.patrickgold.jetpref.datastore.model.collectAsState
 import org.florisboard.lib.snygg.ui.SnyggIcon
+import org.florisboard.lib.snygg.ui.SnyggRow
+import org.florisboard.lib.snygg.ui.SnyggText
 
 @Composable
 fun TextInputLayout(
@@ -54,6 +63,7 @@ fun TextInputLayout(
     val state by keyboardManager.activeState.collectAsState()
     val evaluator by keyboardManager.activeEvaluator.collectAsState()
     val writerUi by WriterNavStore.ui.collectAsState()
+    val voiceListening by keyboardManager.voiceListening.collectAsState()
 
     InlineSuggestionsStyleCache()
 
@@ -62,27 +72,71 @@ fun TextInputLayout(
             .fillMaxWidth()
             .wrapContentHeight(),
     ) {
-        Smartbar()
-        if (writerUi.layer == WriterLayer.RESULTS) {
-            WriterSuggestionsPanel(writerUi)
-        } else if (state.isActionsOverflowVisible) {
-            QuickActionsOverflowPanel()
-        } else {
-            Box {
-                val incognitoDisplayMode by prefs.keyboard.incognitoDisplayMode.collectAsState()
-                val showIncognitoIcon = evaluator.state.isIncognitoMode &&
-                    incognitoDisplayMode == IncognitoDisplayMode.DISPLAY_BEHIND_KEYBOARD
-                if (showIncognitoIcon) {
-                    SnyggIcon(
-                        FlorisImeUi.IncognitoModeIndicator.elementName,
-                        modifier = Modifier
-                            .matchParentSize()
-                            .align(Alignment.Center),
-                        painter = painterResource(R.drawable.ic_incognito),
+        if (writerUi.coversIme) {
+            val app = context.applicationContext as? FlorisApplication
+            val hostSheet = app?.hostSuggestSheet
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(FlorisImeSizing.imeUiHeight()),
+            ) {
+                if (app != null && hostSheet != null) {
+                    hostSheet.Content(
+                        onChip = { app.onHostGrammarChipAccepted(it) },
+                        onDismiss = { app.onHostWriterBackRequested() },
                     )
+                } else {
+                    WriterSuggestionsPanel(writerUi, fillIme = true)
                 }
-                TextKeyboardLayout(evaluator = evaluator)
+            }
+        } else {
+            Smartbar()
+            if (voiceListening) {
+                VoiceListeningBar(onStop = { keyboardManager.stopVoiceInput() })
+            }
+            if (writerUi.coversKeys) {
+                WriterSuggestionsPanel(writerUi)
+            } else if (state.isActionsOverflowVisible) {
+                QuickActionsOverflowPanel()
+            } else {
+                Box {
+                    val incognitoDisplayMode by prefs.keyboard.incognitoDisplayMode.collectAsState()
+                    val showIncognitoIcon = evaluator.state.isIncognitoMode &&
+                        incognitoDisplayMode == IncognitoDisplayMode.DISPLAY_BEHIND_KEYBOARD
+                    if (showIncognitoIcon) {
+                        SnyggIcon(
+                            FlorisImeUi.IncognitoModeIndicator.elementName,
+                            modifier = Modifier
+                                .matchParentSize()
+                                .align(Alignment.Center),
+                            painter = painterResource(R.drawable.ic_incognito),
+                        )
+                    }
+                    TextKeyboardLayout(evaluator = evaluator)
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun VoiceListeningBar(onStop: () -> Unit) {
+    SnyggRow(
+        FlorisImeUi.Smartbar.elementName,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(36.dp),
+        clickAndSemanticsModifier = Modifier
+            .clickable(onClick = onStop)
+            .padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        SnyggIcon(
+            imageVector = Icons.Default.KeyboardVoice,
+        )
+        SnyggText(
+            modifier = Modifier.padding(start = 8.dp),
+            text = "listening · tap to stop",
+        )
     }
 }

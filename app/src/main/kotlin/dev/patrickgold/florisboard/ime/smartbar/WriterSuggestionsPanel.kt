@@ -28,6 +28,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
@@ -57,24 +59,33 @@ internal const val WriterSuggestionRowHeightDp = 68
 internal const val WriterThinkingRowHeightDp = 72
 
 /**
- * Vertical rewrite list covering the keys (same overflow slot as the three-dot
- * action grid). Tap a line to replace the whole compose box.
+ * Vertical rewrite list. Writer transforms cover the keys. Suggest covers
+ * the whole IME (smartbar + keys) via the host assistant sheet; this panel
+ * is the fallback if that sheet is not bound.
  */
 @Composable
 fun WriterSuggestionsPanel(
     ui: WriterUi,
+    fillIme: Boolean = false,
 ) {
     val context = LocalContext.current
+
     fun accept(text: String) {
         val app = context.applicationContext as? FlorisApplication ?: return
         app.onHostGrammarChipAccepted(text)
+    }
+
+    val panelHeight = if (fillIme) {
+        FlorisImeSizing.imeUiHeight()
+    } else {
+        FlorisImeSizing.keyboardUiHeight()
     }
 
     SnyggBox(
         elementName = FlorisImeUi.SmartbarActionsOverflow.elementName,
         modifier = Modifier
             .fillMaxWidth()
-            .height(FlorisImeSizing.keyboardUiHeight()),
+            .height(panelHeight),
     ) {
         SnyggColumn(
             modifier = Modifier.fillMaxSize(),
@@ -88,13 +99,20 @@ fun WriterSuggestionsPanel(
                     modifier = Modifier.height(WriterThinkingRowHeightDp.dp),
                 )
             } else {
-                ui.texts.forEach { text ->
-                    WriterSuggestionLine(
-                        text = text,
-                        enabled = true,
-                        onClick = { accept(text) },
-                        modifier = Modifier.height(WriterSuggestionRowHeightDp.dp),
-                    )
+                SnyggColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    ui.texts.forEach { text ->
+                        WriterSuggestionLine(
+                            text = text,
+                            enabled = ui.selectable,
+                            onClick = { accept(text) },
+                            modifier = Modifier.height(WriterSuggestionRowHeightDp.dp),
+                        )
+                    }
                 }
             }
         }

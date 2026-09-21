@@ -327,7 +327,11 @@ private fun TextKeyButton(
             .absoluteOffset { key.visibleBounds.topLeft.toIntOffset() },
     ) {
         val isTelPadKey = key.computedData.type == KeyType.NUMERIC && evaluator.keyboard.mode == KeyboardMode.PHONE
+        val iconOnly = key.foregroundImageVector != null
         key.label?.let { label ->
+            if (iconOnly) {
+                return@let
+            }
             var customLabel = label
             if (key.computedData.code == KeyCode.SPACE) {
                 val prefs by FlorisPreferenceStore

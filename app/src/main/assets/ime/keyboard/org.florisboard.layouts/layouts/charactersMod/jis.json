@@ -17,7 +17,7 @@
       "full": { "code": 12290, "label": "。", "groupId": 2 },
       "half": { "code": 65377, "label": "｡", "groupId": 2 }
     },
-    { "code": -233, "label": "voice_input" },
+    { "code": -233, "label": "voice_input", "type": "system_gui" },
     { "code":    10, "label": "enter", "groupId": 3, "type": "enter_editing" }
   ]
 ]

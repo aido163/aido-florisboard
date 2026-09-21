@@ -138,6 +138,9 @@ private fun computeLanguageDisplayName(locale: FlorisLocale, displayLanguageName
 
 fun ComputingEvaluator.computeLabel(data: KeyData): String? {
     val evaluator = this
+    if (data.code == KeyCode.VOICE_INPUT) {
+        return null
+    }
     return if (data.type == KeyType.CHARACTER && data.code != KeyCode.SPACE && data.code != KeyCode.CJK_SPACE
         && data.code != KeyCode.HALF_SPACE && data.code != KeyCode.KESHIDA || data.type == KeyType.NUMERIC
     ) {

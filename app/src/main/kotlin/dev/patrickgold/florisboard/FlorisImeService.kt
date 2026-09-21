@@ -146,6 +146,20 @@ class FlorisImeService : LifecycleInputMethodService() {
             val ims = FlorisImeServiceReference.get() ?: return null
             return ims.windowController
         }
+
+        /**
+         * Re-run [onComputeInsets] after the Compose IME window grows (Suggest
+         * sheet). The root view is MATCH_PARENT, so Android will not pick up
+         * the new height unless the decor view relayouts.
+         */
+        fun refreshInsets() {
+            val ims = FlorisImeServiceReference.get() ?: return
+            val decor = ims.window?.window?.decorView ?: return
+            decor.post {
+                decor.requestLayout()
+                decor.invalidate()
+            }
+        }
     }
 
     fun hideUi() {
@@ -379,6 +393,10 @@ class FlorisImeService : LifecycleInputMethodService() {
             activeState.isSelectionMode = editorInfo.initialSelection.isSelectionMode
             editorInstance.handleStartInputView(editorInfo, isRestart = restarting)
         }
+        val pendingVoice = (application as? FlorisApplication)?.takePendingVoiceDictation()
+        if (!pendingVoice.isNullOrBlank()) {
+            editorInstance.commitText(pendingVoice)
+        }
     }
 
     override fun onEvaluateInputViewShown(): Boolean {
@@ -410,6 +428,7 @@ class FlorisImeService : LifecycleInputMethodService() {
 
     override fun onFinishInputView(finishingInput: Boolean) {
         flogInfo { "finishing=$finishingInput" }
+        keyboardManager.stopVoiceInput()
         (application as? FlorisApplication)?.onImeFinishInputView()
         super.onFinishInputView(finishingInput)
         editorInstance.handleFinishInputView()
@@ -436,6 +455,7 @@ class FlorisImeService : LifecycleInputMethodService() {
         super.onWindowHidden()
         if (windowController.onWindowHidden()) {
             flogInfo(LogTopic.IMS_EVENTS)
+            keyboardManager.stopVoiceInput()
             activeState.batchEdit {
                 activeState.imeUiMode = ImeUiMode.TEXT
                 activeState.isActionsOverflowVisible = false

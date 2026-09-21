@@ -540,7 +540,7 @@ data class TextKeyData(
 
         /** Predefined key data for [KeyCode.VOICE_INPUT] */
         val VOICE_INPUT = TextKeyData(
-            type = KeyType.UNSPECIFIED,
+            type = KeyType.SYSTEM_GUI,
             code = KeyCode.VOICE_INPUT,
             label = "voice_input",
         )
