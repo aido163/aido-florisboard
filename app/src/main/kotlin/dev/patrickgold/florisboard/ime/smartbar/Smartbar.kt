@@ -356,6 +356,7 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
             ) {
                 CandidatesRow()
             }
+            WriterMicButton(Modifier.padding(end = 8.dp))
         }
         return
     }

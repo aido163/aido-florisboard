@@ -36,6 +36,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardVoice
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -48,6 +49,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.FlorisApplication
 import dev.patrickgold.florisboard.R
+import dev.patrickgold.florisboard.keyboardManager
 import dev.patrickgold.florisboard.ime.input.LocalInputFeedbackController
 import dev.patrickgold.florisboard.ime.text.key.KeyCode
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyData
@@ -83,6 +85,12 @@ internal val WriterBarPrimary = WriterBarAction(
     R.string.quick_action__suggest,
 )
 
+/** Pinned to the trailing edge of the smartbar, after Suggest. */
+internal val WriterBarTrailing = WriterBarAction(
+    TextKeyData.VOICE_INPUT,
+    R.string.quick_action__voice_input,
+)
+
 internal fun showWriterToolsRow(
     layout: SmartbarLayout,
     hasSuggestionStrip: Boolean,
@@ -93,6 +101,51 @@ internal fun countsAsSuggestionStrip(
     pinnedWriter: Boolean,
     hasWordCompletions: Boolean,
 ): Boolean = pinnedWriter || hasWordCompletions
+
+@Composable
+internal fun WriterMicButton(
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val keyboardManager by context.keyboardManager()
+    val listening by keyboardManager.voiceListening.collectAsState()
+    val inputFeedbackController = LocalInputFeedbackController.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val selector = if (isPressed || listening) SnyggSelector.PRESSED else null
+    val attributes = mapOf(FlorisImeUi.Attr.Code to KeyCode.VOICE_INPUT)
+    SnyggBox(
+        elementName = FlorisImeUi.SmartbarActionKey.elementName,
+        attributes = attributes,
+        selector = selector,
+        modifier = modifier.size(width = WriterBackSizeDp.dp, height = WriterChipHeightDp.dp),
+        contentAlignment = Alignment.Center,
+        clickAndSemanticsModifier = Modifier
+            .indication(interactionSource, LocalIndication.current)
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    down.consume()
+                    val press = PressInteraction.Press(down.position)
+                    inputFeedbackController.keyPress(TextKeyData.VOICE_INPUT)
+                    interactionSource.tryEmit(press)
+                    val up = waitForUpOrCancellation()
+                    if (up != null) {
+                        up.consume()
+                        interactionSource.tryEmit(PressInteraction.Release(press))
+                        keyboardManager.toggleVoiceInput()
+                    } else {
+                        interactionSource.tryEmit(PressInteraction.Cancel(press))
+                    }
+                }
+            },
+    ) {
+        SnyggIcon(
+            imageVector = Icons.Default.KeyboardVoice,
+            contentDescription = stringRes(WriterBarTrailing.labelRes),
+        )
+    }
+}
 
 private fun keyCodeForWriterMode(mode: String): Int = when (mode) {
     "grammar" -> KeyCode.GRAMMAR
@@ -252,6 +305,7 @@ fun WriterToolsBar(
                         onClick = { fire(action.data) },
                     )
                 }
+                WriterMicButton()
             }
             WriterLayer.VARIANTS -> {
                 WriterBackButton()

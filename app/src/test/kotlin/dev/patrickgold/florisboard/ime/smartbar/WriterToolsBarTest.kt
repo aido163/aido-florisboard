@@ -29,6 +29,7 @@ class WriterToolsBarTest : FunSpec({
             KeyCode.HUMANIZE,
         )
         WriterBarPrimary.data.code shouldBe KeyCode.SUGGEST
+        WriterBarTrailing.data.code shouldBe KeyCode.VOICE_INPUT
     }
 
     test("writer row hides when result chips are pinned") {

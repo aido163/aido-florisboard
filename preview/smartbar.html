@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IME smartbar · Kotlin replica</title>
+  <!--
+    Layout replica of FlorisBoard Compose, not Stitch.
+    Source of truth:
+      WriterToolsBar.kt
+      WriterSuggestionsPanel.kt
+      WriterNav.kt
+      TextInputLayout.kt
+      floris_day_my_borderless.json / floris_night_my_borderless.json
+    1 CSS px = 1 Android dp. Phone hues on device follow Material You.
+    Edit this file, then port sizes/copy back to Kotlin. This is not the IME.
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f9f9f9;
+      --on-bg: #1a1c1c;
+      --on-bg-disabled: rgb(175, 175, 175);
+      --surface: #dadada;
+      --on-surface: #1a1c1c;
+      --on-surface-variant: #5f5f5f;
+      --primary: #ffb3b5;
+      --on-primary: #40000c;
+      --page: #ececec;
+      --chat: #efeae2;
+      --bubble: #ffffff;
+      --wa-header: #f0f2f5;
+    }
+    html.night {
+      --bg: #1a1c1c;
+      --on-bg: #e2e2e2;
+      --surface: #383838;
+      --on-surface: #e2e2e2;
+      --on-surface-variant: #9a9a9a;
+      --primary: #ffb3b5;
+      --on-primary: #40000c;
+      --page: #111;
+      --chat: #0b141a;
+      --bubble: #1f2c34;
+      --wa-header: #202c33;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Roboto, system-ui, sans-serif;
+      background: #0d0d0d;
+      color: #fff;
+      display: flex;
+    }
+    .rail {
+      width: 240px;
+      padding: 28px 16px 24px;
+      background: #1a1a1a;
+      flex-shrink: 0;
+    }
+    .kicker { color: #e94057; font-size: 13px; }
+    h1 { font-size: 20px; font-weight: 500; margin: 6px 0 10px; }
+    .hint { color: #adafbb; font-size: 13px; line-height: 18px; margin-bottom: 20px; }
+    .nav {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: 0;
+      color: #adafbb;
+      font: inherit;
+      font-size: 14px;
+      padding: 8px 10px;
+      border-radius: 18px;
+      cursor: pointer;
+    }
+    .nav.on { background: #e94057; color: #fff; }
+    .appearance {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 18px;
+      border: 1px solid #3d3d3d;
+      background: none;
+      color: #fff;
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .bezel {
+      padding: 12px;
+      border-radius: 18px;
+      background: #1a1a1a;
+      border: 1px solid #3d3d3d;
+    }
+    .phone {
+      width: 390px;
+      height: 560px;
+      background: var(--page);
+      color: var(--on-bg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-radius: 18px;
+    }
+    .status {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 16px 4px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+    .wa-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--wa-header);
+      font-size: 16px;
+      font-weight: 500;
+    }
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #c4b5b6;
+    }
+    .sub { font-size: 11px; font-weight: 400; color: var(--on-surface-variant); }
+    .thread {
+      height: 72px;
+      background: var(--chat);
+      padding: 8px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .msg {
+      align-self: flex-start;
+      max-width: 82%;
+      background: var(--bubble);
+      padding: 10px 14px;
+      border-radius: 16px 16px 16px 4px;
+      font-size: 15px;
+      line-height: 20px;
+    }
+    .compose {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 12px;
+      background: var(--chat);
+    }
+    .box {
+      flex: 1;
+      min-height: 44px;
+      border-radius: 22px;
+      background: var(--bubble);
+      padding: 10px 14px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+    }
+    .send {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #e94057;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 12px;
+    }
+    .ime {
+      background: var(--bg);
+      color: var(--on-bg);
+    }
+    .smartbar {
+      height: 40px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 8px;
+      font-size: 18px;
+    }
+    .chip {
+      flex: 1;
+      height: 34px;
+      border: 0;
+      background: transparent;
+      color: var(--on-bg);
+      border-radius: 8px;
+      font: inherit;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .chip:hover, .chip:active { background: var(--surface); }
+    .chip.grow-0 {
+      flex: 0 0 auto;
+      height: 32px;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .lamp {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+    .back {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 0;
+      background: var(--primary);
+      color: var(--on-primary);
+      font-size: 22px;
+      cursor: pointer;
+      flex-shrink: 0;
+      box-shadow: 0 1px 2px rgba(0,0,0,.2);
+    }
+    .keys, .panel {
+      height: 260px;
+    }
+    .keys {
+      display: flex;
+      flex-direction: column;
+    }
+    .row {
+      height: 65px;
+      display: flex;
+      align-items: stretch;
+    }
+    .key {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      font-size: 22px;
+      color: var(--on-surface);
+      border-radius: 8px;
+    }
+    .space {
+      flex: 4;
+      margin: 8px 6px;
+      background: var(--surface);
+      color: var(--on-surface-variant);
+      font-size: 12px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+    }
+    .enter {
+      flex: 1.4;
+      margin: 8px 6px;
+      background: var(--primary);
+      color: var(--on-surface);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+    }
+    .mod { font-size: 18px; color: var(--on-surface-variant); }
+    .panel {
+      padding: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      overflow: auto;
+    }
+    .tile {
+      width: 100%;
+      min-height: 68px;
+      margin: 4px 0;
+      padding: 4px 8px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--bg);
+      color: var(--on-bg);
+      font: inherit;
+      font-size: 14px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .tile.think { min-height: 72px; color: var(--on-bg-disabled); cursor: default; }
+    .tile.deep { min-height: 40px; }
+    .tile:active:not(.think) { background: var(--surface); }
+    .tile span { flex: 1; }
+    .digits { display: flex; gap: 8px; }
+    .digits .tile { flex: 1; min-height: 40px; margin: 0; text-align: center; justify-content: center; }
+  </style>
+</head>
+<body>
+  <aside class="rail">
+    <div class="kicker">florisboard preview</div>
+    <h1>kotlin smartbar</h1>
+    <p class="hint">
+      Replica of WriterToolsBar + WriterSuggestionsPanel.
+      Click the chips. Stitch HTML is a different design.
+    </p>
+    <button class="nav" data-jump="tools">tools</button>
+    <button class="nav" data-jump="variants">child chips</button>
+    <button class="nav" data-jump="thinking">thinking</button>
+    <button class="nav" data-jump="list">suggestion list</button>
+    <button class="nav" data-jump="capture">deep capture</button>
+    <button class="appearance" id="themeBtn" type="button">theme: light</button>
+  </aside>
+  <main class="stage">
+    <div class="bezel">
+      <div class="phone" id="phone">
+        <div class="status"><span>11:42</span><span>94%</span></div>
+        <div class="wa-head">
+          <div class="avatar"></div>
+          <div>
+            <div>jules</div>
+            <div class="sub">last seen today at 11:38 pm</div>
+          </div>
+        </div>
+        <div class="thread">
+          <div class="msg">i'm around later if you still want that walk</div>
+        </div>
+        <div class="compose">
+          <div class="box" id="compose">i am around later if you still want that walk</div>
+          <div class="send">send</div>
+        </div>
+        <div class="ime">
+          <div class="smartbar" id="bar"></div>
+          <div id="body"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  <script>
+    const VARIANTS = {
+      rewrite: ["warm", "humor", "professional"],
+      translate: ["english", "hinglish", "keep"],
+      humanize: ["natural", "shorter", "casual"],
+    };
+    const TOOLS = [
+      { id: "grammar", label: "fix grammar" },
+      { id: "rewrite", label: "rewrite" },
+      { id: "translate", label: "translate" },
+      { id: "humanize", label: "humanize" },
+      { id: "suggest", label: "suggest" },
+    ];
+    const SAMPLE = {
+      grammar: ["i'm around later if you still want that walk"],
+      rewrite: [
+        "still down for that walk later if you are",
+        "i'll be around — walk still on the table",
+        "later works if you still want to walk",
+      ],
+      translate: ["i'm around later if you still want that walk"],
+      humanize: ["i'm around later if you still want that walk"],
+      suggest: [
+        "yeah later is good, that walk still sounds nice",
+        "i'm in, text me when you're heading out",
+        "same, i'll be around — just say when",
+        "want me to come by yours first?",
+        "only if we get that pasta after",
+        "okay but i'm not doing the long loop tonight",
+      ],
+    };
+
+    let ui = { layer: "TOOLS", mode: "", variant: "", texts: [], thinking: false, picking: false };
+    let night = false;
+
+    function setUi(next) {
+      ui = next;
+      render();
+    }
+
+    function back() {
+      if (ui.layer === "RESULTS") {
+        setUi((ui.mode === "suggest" || ui.mode === "grammar")
+          ? { layer: "TOOLS", mode: "", variant: "", texts: [], thinking: false, picking: false }
+          : { layer: "VARIANTS", mode: ui.mode, variant: "", texts: [], thinking: false, picking: false });
+      } else {
+        setUi({ layer: "TOOLS", mode: "", variant: "", texts: [], thinking: false, picking: false });
+      }
+    }
+
+    function fireTool(id) {
+      if (id === "suggest") {
+        setUi({ layer: "RESULTS", mode: "suggest", variant: "suggest", texts: [], thinking: true, picking: false });
+        setTimeout(() => setUi({ ...ui, thinking: false, texts: SAMPLE.suggest }), 700);
+        return;
+      }
+      if (id === "grammar") {
+        setUi({ layer: "RESULTS", mode: "grammar", variant: "fix grammar", texts: [], thinking: true, picking: false });
+        setTimeout(() => {
+          const texts = SAMPLE.grammar || [];
+          if (texts[0]) {
+            accept(texts[0]);
+            return;
+          }
+          setUi({ layer: "TOOLS", mode: "", variant: "", texts: [], thinking: false, picking: false });
+        }, 700);
+        return;
+      }
+      setUi({ layer: "VARIANTS", mode: id, variant: "", texts: [], thinking: false, picking: false });
+    }
+
+    function fireVariant(label) {
+      setUi({ layer: "RESULTS", mode: ui.mode, variant: label, texts: [], thinking: true, picking: false });
+      const mode = ui.mode;
+      setTimeout(() => setUi({
+        layer: "RESULTS", mode, variant: label, texts: SAMPLE[mode] || SAMPLE.rewrite, thinking: false, picking: false,
+      }), 700);
+    }
+
+    function accept(text) {
+      document.getElementById("compose").textContent = text;
+      setUi({ layer: "TOOLS", mode: "", variant: "", texts: [], thinking: false, picking: false });
+    }
+
+    function chip(label, onClick, extra = "") {
+      const b = document.createElement("button");
+      b.className = "chip" + extra;
+      b.textContent = label;
+      b.onclick = onClick;
+      return b;
+    }
+
+    function renderBar() {
+      const bar = document.getElementById("bar");
+      bar.replaceChildren();
+      if (ui.layer === "TOOLS") {
+        TOOLS.forEach((t) => bar.append(chip(t.label, () => fireTool(t.id))));
+        return;
+      }
+      const backBtn = document.createElement("button");
+      backBtn.className = "back";
+      backBtn.textContent = "‹";
+      backBtn.onclick = back;
+      bar.append(backBtn);
+      if (ui.layer === "VARIANTS") {
+        (VARIANTS[ui.mode] || []).forEach((v) => bar.append(chip(v, () => fireVariant(v))));
+        return;
+      }
+      const selected = chip(ui.variant || ui.mode, () => {}, " grow-0");
+      selected.innerHTML = "";
+      const lamp = document.createElement("i");
+      lamp.className = "lamp";
+      selected.append(lamp, document.createTextNode(ui.variant || ui.mode));
+      bar.append(selected);
+    }
+
+    function tile(text, opts = {}) {
+      const b = document.createElement("button");
+      b.className = "tile" + (opts.cls ? " " + opts.cls : "");
+      const span = document.createElement("span");
+      span.textContent = text;
+      b.append(span);
+      if (opts.onClick) b.onclick = opts.onClick;
+      return b;
+    }
+
+    function qwerty() {
+      const wrap = document.createElement("div");
+      wrap.className = "keys";
+      const rows = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
+      rows.forEach((letters, i) => {
+        const row = document.createElement("div");
+        row.className = "row";
+        if (i === 2) {
+          const shift = document.createElement("div");
+          shift.className = "key mod";
+          shift.textContent = "⇧";
+          row.append(shift);
+        }
+        [...letters].forEach((ch) => {
+          const k = document.createElement("div");
+          k.className = "key";
+          k.textContent = ch;
+          row.append(k);
+        });
+        if (i === 2) {
+          const del = document.createElement("div");
+          del.className = "key mod";
+          del.textContent = "⌫";
+          row.append(del);
+        }
+        wrap.append(row);
+      });
+      const bottom = document.createElement("div");
+      bottom.className = "row";
+      bottom.innerHTML = '<div class="key mod">?123</div><div class="key">,</div><div class="space">English</div><div class="key">.</div><div class="enter">⏎</div>';
+      wrap.append(bottom);
+      return wrap;
+    }
+
+    function capturePad() {
+      const panel = document.createElement("div");
+      panel.className = "panel";
+      panel.append(tile("how many messages?", { cls: "deep think" }));
+      const presets = document.createElement("div");
+      presets.className = "digits";
+      [50, 100, 200].forEach((n) => presets.append(tile(String(n), { cls: "deep", onClick: () => {} })));
+      panel.append(presets);
+      const custom = document.createElement("div");
+      custom.className = "digits";
+      custom.append(tile("custom 50", { cls: "deep think" }), tile("⌫", { cls: "deep" }));
+      panel.append(custom);
+      [[1,2,3,4,5],[6,7,8,9,0]].forEach((row) => {
+        const r = document.createElement("div");
+        r.className = "digits";
+        row.forEach((d) => r.append(tile(String(d), { cls: "deep" })));
+        panel.append(r);
+      });
+      const ok = document.createElement("div");
+      ok.className = "digits";
+      ok.append(
+        tile("cancel", { cls: "deep", onClick: () => setUi({ ...ui, picking: false }) }),
+        tile("ok", { cls: "deep", onClick: () => setUi({ ...ui, picking: false, thinking: true, texts: [] }) }),
+      );
+      panel.append(ok);
+      return panel;
+    }
+
+    function renderBody() {
+      const body = document.getElementById("body");
+      body.replaceChildren();
+      if (ui.layer !== "RESULTS") {
+        body.append(qwerty());
+        return;
+      }
+      if (ui.picking) {
+        body.append(capturePad());
+        return;
+      }
+      const panel = document.createElement("div");
+      panel.className = "panel";
+      if (ui.thinking) {
+        panel.append(tile("thinking…", { cls: "think" }));
+      } else {
+        if (ui.mode === "suggest") {
+          panel.append(tile("capture full chat for better suggestions", {
+            cls: "deep",
+            onClick: () => setUi({ ...ui, picking: true }),
+          }));
+        }
+        ui.texts.forEach((t) => panel.append(tile(t, { onClick: () => accept(t) })));
+      }
+      body.append(panel);
+    }
+
+    function render() {
+      renderBar();
+      renderBody();
+      document.querySelectorAll(".nav").forEach((el) => {
+        const jump = el.dataset.jump;
+        const on =
+          (jump === "tools" && ui.layer === "TOOLS") ||
+          (jump === "variants" && ui.layer === "VARIANTS") ||
+          (jump === "thinking" && ui.layer === "RESULTS" && ui.thinking) ||
+          (jump === "list" && ui.layer === "RESULTS" && !ui.thinking && !ui.picking) ||
+          (jump === "capture" && ui.picking);
+        el.classList.toggle("on", on);
+      });
+    }
+
+    document.querySelectorAll(".nav").forEach((el) => {
+      el.onclick = () => {
+        const jump = el.dataset.jump;
+        if (jump === "tools") setUi({ layer: "TOOLS", mode: "", variant: "", texts: [], thinking: false, picking: false });
+        if (jump === "variants") setUi({ layer: "VARIANTS", mode: "rewrite", variant: "", texts: [], thinking: false, picking: false });
+        if (jump === "thinking") setUi({ layer: "RESULTS", mode: "rewrite", variant: "warm", texts: [], thinking: true, picking: false });
+        if (jump === "list") setUi({ layer: "RESULTS", mode: "suggest", variant: "suggest", texts: SAMPLE.suggest, thinking: false, picking: false });
+        if (jump === "capture") setUi({ layer: "RESULTS", mode: "suggest", variant: "suggest", texts: [], thinking: false, picking: true });
+      };
+    });
+
+    document.getElementById("themeBtn").onclick = () => {
+      night = !night;
+      document.documentElement.classList.toggle("night", night);
+      document.getElementById("themeBtn").textContent = "theme: " + (night ? "night" : "light");
+    };
+
+    render();
+  </script>
+</body>
+</html>
