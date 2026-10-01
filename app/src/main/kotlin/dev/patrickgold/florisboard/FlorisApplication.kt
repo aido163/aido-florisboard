@@ -151,6 +151,15 @@ open class FlorisApplication : Application() {
      */
     open fun onHostWriterVariantRequested(id: String, label: String) {}
 
+    /** Host hook for the add chip on a writer variant row. */
+    open fun onHostWriterCatalogRequested() {}
+
+    /**
+     * Host hook when a catalog chip is chosen. Saves it onto the user's
+     * writer preferences for the open mode.
+     */
+    open fun onHostWriterChipAdded(id: String) {}
+
     /**
      * Host hook for back from nested writer variants or results.
      */

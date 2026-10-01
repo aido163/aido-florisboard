@@ -182,6 +182,14 @@ fun WriterToolsBar(
         val app = context.applicationContext as? FlorisApplication ?: return
         app.onHostWriterVariantRequested(variant.id, variant.label)
     }
+    fun fireCatalog() {
+        val app = context.applicationContext as? FlorisApplication ?: return
+        app.onHostWriterCatalogRequested()
+    }
+    fun fireAdd(variant: WriterVariant) {
+        val app = context.applicationContext as? FlorisApplication ?: return
+        app.onHostWriterChipAdded(variant.id)
+    }
 
     @Composable
     fun RowScope.ToolChip(
@@ -203,7 +211,9 @@ fun WriterToolsBar(
                 .fillMaxWidth()
                 .height(WriterChipHeightDp.dp)
         } else {
-            Modifier.height(WriterSelectedChipHeightDp.dp)
+            Modifier
+                .height(WriterSelectedChipHeightDp.dp)
+                .padding(horizontal = if (lamp) 0.dp else 10.dp)
         }
         SnyggRow(
             elementName = elementName,
@@ -316,12 +326,31 @@ fun WriterToolsBar(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    WriterNav.variantsFor(writerUi.mode).forEach { variant ->
-                        ToolChip(
-                            label = variant.label,
-                            code = keyCodeForWriterMode(writerUi.mode),
-                            onClick = { fireVariant(variant) },
-                        )
+                    if (writerUi.catalogOpen) {
+                        WriterNav.availableFor(writerUi.mode).forEach { option ->
+                            ToolChip(
+                                label = option.label,
+                                code = keyCodeForWriterMode(writerUi.mode),
+                                onClick = { fireAdd(option) },
+                                fill = false,
+                            )
+                        }
+                    } else {
+                        WriterNav.variantsFor(writerUi.mode).forEach { variant ->
+                            ToolChip(
+                                label = variant.label,
+                                code = keyCodeForWriterMode(writerUi.mode),
+                                onClick = { fireVariant(variant) },
+                            )
+                        }
+                        if (WriterNav.canAdd(writerUi.mode)) {
+                            ToolChip(
+                                label = "add",
+                                code = keyCodeForWriterMode(writerUi.mode),
+                                onClick = { fireCatalog() },
+                                fill = false,
+                            )
+                        }
                     }
                 }
             }

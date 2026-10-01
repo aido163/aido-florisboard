@@ -43,6 +43,10 @@ data class WriterUi(
     val texts: List<String> = emptyList(),
     val thinking: Boolean = false,
     val selectable: Boolean = true,
+    /** Variant row is showing catalog ids the user has not saved yet. */
+    val catalogOpen: Boolean = false,
+    /** Bumped when saved chips change so the bar recomposes. */
+    val chipEpoch: Int = 0,
 ) {
     val nestedOpen: Boolean get() = layer != WriterLayer.TOOLS
 
@@ -71,6 +75,45 @@ object WriterNav {
         WriterVariant("casual", "casual"),
     )
 
+    val TRANSLATE_CATALOG: List<WriterVariant> = listOf(
+        WriterVariant("english", "english"),
+        WriterVariant("hindi", "hindi"),
+        WriterVariant("hinglish", "hinglish"),
+        WriterVariant("french", "french"),
+        WriterVariant("german", "german"),
+        WriterVariant("spanish", "spanish"),
+        WriterVariant("portuguese", "portuguese"),
+        WriterVariant("tamil", "tamil"),
+        WriterVariant("telugu", "telugu"),
+        WriterVariant("bengali", "bengali"),
+        WriterVariant("marathi", "marathi"),
+        WriterVariant("gujarati", "gujarati"),
+    )
+
+    val REWRITE_CATALOG: List<WriterVariant> = listOf(
+        WriterVariant("warm", "warm"),
+        WriterVariant("humor", "humor"),
+        WriterVariant("professional", "professional"),
+        WriterVariant("casual", "casual"),
+        WriterVariant("tighter", "tighter"),
+        WriterVariant("sharper", "sharper"),
+        WriterVariant("flirty", "flirty"),
+        WriterVariant("dry", "dry"),
+    )
+
+    val HUMANIZE_CATALOG: List<WriterVariant> = listOf(
+        WriterVariant("natural", "natural"),
+        WriterVariant("shorter", "shorter"),
+        WriterVariant("casual", "casual"),
+        WriterVariant("warmer", "warmer"),
+        WriterVariant("looser", "looser"),
+        WriterVariant("spoken", "spoken"),
+        WriterVariant("punchier", "punchier"),
+        WriterVariant("messy", "messy"),
+    )
+
+    const val MAX = 8
+
     @Volatile
     private var translateVariants: List<WriterVariant> = DEFAULT_TRANSLATE
 
@@ -97,6 +140,37 @@ object WriterNav {
         "translate" -> translateVariants
         "humanize" -> humanizeVariants
         else -> emptyList()
+    }
+
+    fun catalogFor(mode: String): List<WriterVariant> = when (mode) {
+        "rewrite" -> REWRITE_CATALOG
+        "translate" -> TRANSLATE_CATALOG
+        "humanize" -> HUMANIZE_CATALOG
+        else -> emptyList()
+    }
+
+    /** Catalog ids that are not already on the saved chip row. */
+    fun availableFor(mode: String): List<WriterVariant> {
+        val saved = variantsFor(mode).map { it.id }.toSet()
+        return catalogFor(mode).filter { it.id !in saved }
+    }
+
+    fun canAdd(mode: String): Boolean =
+        variantsFor(mode).size < MAX && availableFor(mode).isNotEmpty()
+
+    fun openCatalog(current: WriterUi): WriterUi {
+        if (current.layer != WriterLayer.VARIANTS || current.mode.isBlank()) return current
+        if (!canAdd(current.mode)) return current
+        return current.copy(catalogOpen = true)
+    }
+
+    fun noteChipsChanged(current: WriterUi): WriterUi {
+        val next = current.copy(chipEpoch = current.chipEpoch + 1)
+        return if (next.catalogOpen && !canAdd(next.mode)) {
+            next.copy(catalogOpen = false)
+        } else {
+            next
+        }
     }
 
     private fun variantsFromIds(
@@ -179,12 +253,15 @@ object WriterNav {
         return WriterUi(layer = WriterLayer.VARIANTS, mode = current.mode)
     }
 
-    fun back(current: WriterUi): WriterUi = when (current.layer) {
-        WriterLayer.RESULTS ->
-            if (skipsVariants(current.mode)) WriterUi()
-            else WriterUi(layer = WriterLayer.VARIANTS, mode = current.mode)
-        WriterLayer.VARIANTS -> WriterUi()
-        WriterLayer.TOOLS -> WriterUi()
+    fun back(current: WriterUi): WriterUi {
+        if (current.catalogOpen) return current.copy(catalogOpen = false)
+        return when (current.layer) {
+            WriterLayer.RESULTS ->
+                if (skipsVariants(current.mode)) WriterUi()
+                else WriterUi(layer = WriterLayer.VARIANTS, mode = current.mode)
+            WriterLayer.VARIANTS -> WriterUi()
+            WriterLayer.TOOLS -> WriterUi()
+        }
     }
 
     fun reset(): WriterUi = WriterUi()
