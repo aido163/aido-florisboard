@@ -82,7 +82,7 @@ class VoiceInputController(
             main.post { startCapture() }
             return
         }
-        if (presentedState.value) {
+        if (sessionArmed()) {
             halt(clearSheet = true)
         }
         captureOnlyState.value = true
@@ -169,8 +169,11 @@ class VoiceInputController(
         beginListening(token)
     }
 
+    private fun sessionArmed(): Boolean =
+        voiceRecognizerArmed(presentedState.value, captureOnlyState.value)
+
     private fun beginListening(token: Int) {
-        if (token != session || !presentedState.value) return
+        if (token != session || !sessionArmed()) return
         listenGeneration += 1
         val generation = listenGeneration
         destroyRecognizer()
@@ -193,7 +196,7 @@ class VoiceInputController(
 
     private fun listener(token: Int, generation: Int) = object : RecognitionListener {
         private fun live(): Boolean {
-            return token == session && generation == listenGeneration && presentedState.value
+            return token == session && generation == listenGeneration && sessionArmed()
         }
 
         override fun onReadyForSpeech(params: Bundle?) = Unit
@@ -259,7 +262,7 @@ class VoiceInputController(
     }
 
     private fun scheduleContinue(token: Int) {
-        if (!presentedState.value || token != session) return
+        if (!sessionArmed() || token != session) return
         if (restarts >= 6) {
             listeningState.value = false
             destroyRecognizer()
@@ -269,7 +272,7 @@ class VoiceInputController(
             return
         }
         main.postDelayed({
-            if (token == session && presentedState.value) {
+            if (token == session && sessionArmed()) {
                 beginListening(token)
             }
         }, 200)

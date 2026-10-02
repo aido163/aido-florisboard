@@ -42,6 +42,12 @@ class ComputingEvaluatorTest : FunSpec({
         voiceDictationSheetVisible(presented = false, captureOnly = false) shouldBe false
     }
 
+    test("context listen still arms the recognizer without the dictation sheet") {
+        voiceRecognizerArmed(presented = true, captureOnly = false) shouldBe true
+        voiceRecognizerArmed(presented = false, captureOnly = true) shouldBe true
+        voiceRecognizerArmed(presented = false, captureOnly = false) shouldBe false
+    }
+
     test("spoken dictation text uses the first recognition result") {
         spokenDictationText(listOf("hello maya", "hello")) shouldBe "hello maya"
         spokenDictationText(emptyList()) shouldBe ""

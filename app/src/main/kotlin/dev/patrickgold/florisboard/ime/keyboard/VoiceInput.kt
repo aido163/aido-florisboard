@@ -27,6 +27,10 @@ fun spokenDictationText(results: List<String>?): String {
 fun voiceDictationSheetVisible(presented: Boolean, captureOnly: Boolean): Boolean =
     presented && !captureOnly
 
+/** Draft sheet or in-place context listen — both must run SpeechRecognizer. */
+fun voiceRecognizerArmed(presented: Boolean, captureOnly: Boolean): Boolean =
+    presented || captureOnly
+
 /** Finished phrases plus the live hypothesis, as one readable line. */
 fun dictationTranscript(segments: List<String>, partial: String): String {
     return (segments + partial)
