@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
@@ -112,10 +113,10 @@ internal data class WriterBarAction(
 /** Stitch smartbar: 34dp ghost pills, 40dp back, compact selected variant. */
 internal const val WriterChipHeightDp = 34
 internal const val WriterBackSizeDp = 40
-/** Child chips sit in a short track under the smart bar, same idea as the iOS row. */
-internal const val WriterMenuChipHeightDp = 40
+/** Child chips match the tool-row pills. Overflow-panel padding must not wrap them. */
+internal const val WriterMenuChipHeightDp = WriterChipHeightDp
 /** Track around the child chips. Just tall enough for the chip and a little inset. */
-internal const val WriterChildTrackHeightDp = 44
+internal const val WriterChildTrackHeightDp = 42
 /** Add options stay compact so the list fits the key area. */
 internal const val WriterCatalogRowHeightDp = 36
 /** Back arrow sits on a content row. It does not get a row of its own. */
@@ -638,6 +639,10 @@ fun WriterToolsBar(
 /**
  * Saved child chips in a horizontal track under the tool row.
  * Add opens the catalog in the key area.
+ *
+ * Wrap-content capsules with key colors. Do not host this row in
+ * SmartbarActionsOverflow — that style pads 12dp for a full key panel
+ * and collapses the labels on a 42dp track.
  */
 @Composable
 fun WriterChildMenu(
@@ -647,7 +652,6 @@ fun WriterChildMenu(
     val context = LocalContext.current
     val variants = WriterNav.variantsFor(mode)
     val icon = writerModeIcon(mode)
-    val code = keyCodeForWriterMode(mode)
     val scroll = rememberScrollState()
 
     fun fireVariant(variant: WriterVariant) {
@@ -664,38 +668,28 @@ fun WriterChildMenu(
         app.onHostWriterCatalogRequested()
     }
 
-    SnyggBox(
-        elementName = FlorisImeUi.SmartbarActionsOverflow.elementName,
+    Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 4.dp)
-            .height(WriterChildTrackHeightDp.dp),
-        contentAlignment = Alignment.CenterStart,
+            .height(WriterChildTrackHeightDp.dp)
+            .horizontalScroll(scroll)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(WriterChipGap),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .horizontalScroll(scroll)
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(WriterChipGap),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            variants.forEach { variant ->
-                WriterMenuChip(
-                    label = variant.label,
-                    icon = icon,
-                    code = code,
-                    onClick = { fireVariant(variant) },
-                )
-            }
-            if (WriterNav.canAdd(mode)) {
-                WriterMenuChip(
-                    label = "add",
-                    icon = Icons.Filled.Add,
-                    code = code,
-                    onClick = { fireCatalog() },
-                )
-            }
+        variants.forEach { variant ->
+            WriterMenuChip(
+                label = variant.label,
+                icon = icon,
+                onClick = { fireVariant(variant) },
+            )
+        }
+        if (WriterNav.canAdd(mode)) {
+            WriterMenuChip(
+                label = "add",
+                icon = Icons.Filled.Add,
+                onClick = { fireCatalog() },
+            )
         }
     }
 }
@@ -704,55 +698,57 @@ fun WriterChildMenu(
 private fun WriterMenuChip(
     label: String,
     icon: ImageVector,
-    code: Int,
     onClick: () -> Unit,
 ) {
+    val keyStyle = rememberSnyggThemeQuery(FlorisImeUi.Key.elementName)
+    val pressedStyle = rememberSnyggThemeQuery(
+        FlorisImeUi.Key.elementName,
+        selector = SnyggSelector.PRESSED,
+    )
     val inputFeedbackController = LocalInputFeedbackController.current
     val interactionSource = remember { MutableInteractionSource() }
-    val isPressed by interactionSource.collectIsPressedAsState()
-    val elementName = FlorisImeUi.SmartbarActionKey.elementName
-    val attributes = mapOf(FlorisImeUi.Attr.Code to code)
-    val selector = if (isPressed) SnyggSelector.PRESSED else null
-    SnyggRow(
-        elementName = elementName,
-        attributes = attributes,
-        selector = selector,
+    val pressed by interactionSource.collectIsPressedAsState()
+    val fill = if (pressed) {
+        pressedStyle.background(default = keyStyle.background(default = Color.DarkGray))
+    } else {
+        keyStyle.background(default = Color.DarkGray)
+    }
+    val ink = if (pressed) {
+        pressedStyle.foreground(default = keyStyle.foreground(default = Color.White))
+    } else {
+        keyStyle.foreground(default = Color.White)
+    }
+    Row(
         modifier = Modifier
             .height(WriterMenuChipHeightDp.dp)
-            .clip(CircleShape),
-        clickAndSemanticsModifier = Modifier
-            .padding(horizontal = WriterChipPadH)
-            .indication(interactionSource, LocalIndication.current)
-            .pointerInput(code, label) {
-                awaitEachGesture {
-                    val down = awaitFirstDown()
-                    down.consume()
-                    val press = PressInteraction.Press(down.position)
+            .wrapContentWidth()
+            .clip(CircleShape)
+            .background(fill)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = {
                     inputFeedbackController.keyPress(TextKeyData.UNSPECIFIED)
-                    interactionSource.tryEmit(press)
-                    val up = waitForUpOrCancellation()
-                    if (up != null) {
-                        up.consume()
-                        interactionSource.tryEmit(PressInteraction.Release(press))
-                        onClick()
-                    } else {
-                        interactionSource.tryEmit(PressInteraction.Cancel(press))
-                    }
-                }
-            },
+                    onClick()
+                },
+            )
+            .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        SnyggIcon(
+        Icon(
             imageVector = icon,
             contentDescription = null,
+            tint = ink,
             modifier = Modifier.size(14.dp),
         )
-        SnyggText(
-            elementName = "$elementName-text",
-            attributes = attributes,
-            selector = selector,
+        Text(
             text = writerChipTitle(label),
+            color = ink,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

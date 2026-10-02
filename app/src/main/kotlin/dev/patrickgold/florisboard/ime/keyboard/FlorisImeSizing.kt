@@ -35,6 +35,10 @@ import dev.patrickgold.florisboard.ime.nlp.NlpInlineAutofill
 import dev.patrickgold.florisboard.ime.smartbar.ExtendedActionsPlacement
 import dev.patrickgold.florisboard.ime.smartbar.InlineSuggestionsChipMargin
 import dev.patrickgold.florisboard.ime.smartbar.SmartbarLayout
+import dev.patrickgold.florisboard.ime.smartbar.WriterChildTrackHeightDp
+import dev.patrickgold.florisboard.ime.smartbar.WriterEditStore
+import dev.patrickgold.florisboard.ime.smartbar.WriterLayer
+import dev.patrickgold.florisboard.ime.smartbar.WriterNavStore
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyboard
 import dev.patrickgold.florisboard.ime.window.LocalWindowController
 import dev.patrickgold.florisboard.keyboardManager
@@ -109,7 +113,18 @@ object FlorisImeSizing {
 
     @Composable
     fun imeUiHeight(): Dp {
-        return keyboardUiHeight() + smartbarUiHeight()
+        val writerUi by WriterNavStore.ui.collectAsState()
+        val toolsOpen by WriterEditStore.toolsOpen.collectAsState()
+        val childTrack = if (
+            writerUi.layer == WriterLayer.VARIANTS &&
+            !writerUi.catalogOpen &&
+            !toolsOpen
+        ) {
+            WriterChildTrackHeightDp.dp
+        } else {
+            0.dp
+        }
+        return keyboardUiHeight() + smartbarUiHeight() + childTrack
     }
 }
 
