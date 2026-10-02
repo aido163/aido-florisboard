@@ -67,7 +67,7 @@
     "foreground": "var(--on-surface)",
     "font-size": "22sp",
     "font-weight": "normal",
-    "shape": "var(--shape)",
+    "shape": "rounded-corner(4dp, 4dp, 4dp, 4dp)",
     "margin": "3dp",
     "text-max-lines": "1"
   },
@@ -295,8 +295,8 @@
     "foreground": "var(--on-surface)",
     "font-size": "15sp",
     "margin": "0dp",
-    "padding": "20dp 12dp",
-    "shape": "rounded-corner(18dp, 18dp, 18dp, 18dp)",
+    "padding": "8dp 10dp",
+    "shape": "rounded-corner(14dp, 14dp, 14dp, 14dp)",
     "text-align": "start",
     "text-max-lines": "3",
     "text-overflow": "ellipsis"

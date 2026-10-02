@@ -25,8 +25,11 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -34,6 +37,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -51,9 +55,9 @@ import org.florisboard.lib.snygg.ui.SnyggIcon
 import org.florisboard.lib.snygg.ui.SnyggRow
 import org.florisboard.lib.snygg.ui.SnyggText
 
-/** Stitch suggestion list: 68dp rewrite cards, 72dp thinking card. */
-internal const val WriterSuggestionRowHeightDp = 68
-internal const val WriterThinkingRowHeightDp = 72
+/** Compact reply cards. The back control shares the top corner, not its own row. */
+internal const val WriterSuggestionRowHeightDp = 44
+internal const val WriterThinkingRowHeightDp = 40
 
 /**
  * Vertical rewrite list under the smart bar. The host assistant sheet is
@@ -71,37 +75,45 @@ fun WriterSuggestionsPanel(
     }
 
     WriterKeySheet {
-        WriterSheetBackButton(onClick = {
-            context.applicationContext.let { appContext ->
-                (appContext as? FlorisApplication)?.onHostWriterBackRequested()
-            }
-        })
-        if (ui.thinking) {
-            WriterSuggestionLine(
-                text = stringRes(R.string.writer_tools__thinking),
-                enabled = false,
-                onClick = {},
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(WriterThinkingRowHeightDp.dp),
-            )
-        } else {
-            SnyggColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                ui.texts.forEach { text ->
-                    WriterSuggestionLine(
-                        text = text,
-                        enabled = ui.selectable,
-                        onClick = { accept(text) },
-                        modifier = Modifier.height(WriterSuggestionRowHeightDp.dp),
-                    )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
+        ) {
+            if (ui.thinking) {
+                WriterSuggestionLine(
+                    text = stringRes(R.string.writer_tools__thinking),
+                    enabled = false,
+                    onClick = {},
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = WriterThinkingRowHeightDp.dp)
+                        .padding(end = 40.dp),
+                )
+            } else {
+                SnyggColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(end = 40.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    ui.texts.forEach { text ->
+                        WriterSuggestionLine(
+                            text = text,
+                            enabled = ui.selectable,
+                            onClick = { accept(text) },
+                            modifier = Modifier.heightIn(min = WriterSuggestionRowHeightDp.dp),
+                        )
+                    }
                 }
             }
+            WriterSheetBackButton(
+                onClick = {
+                    (context.applicationContext as? FlorisApplication)?.onHostWriterBackRequested()
+                },
+                modifier = Modifier.align(Alignment.TopEnd),
+            )
         }
     }
 }

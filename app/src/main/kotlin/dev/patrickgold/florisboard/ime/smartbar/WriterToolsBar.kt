@@ -29,6 +29,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -39,6 +40,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
@@ -62,6 +64,7 @@ import androidx.compose.material.icons.filled.KeyboardVoice
 import androidx.compose.material.icons.filled.LastPage
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Spellcheck
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Icon
@@ -82,6 +85,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.FlorisApplication
+import dev.patrickgold.florisboard.FlorisImeService
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.editorInstance
 import dev.patrickgold.florisboard.keyboardManager
@@ -108,17 +112,14 @@ internal data class WriterBarAction(
 /** Stitch smartbar: 34dp ghost pills, 40dp back, compact selected variant. */
 internal const val WriterChipHeightDp = 34
 internal const val WriterBackSizeDp = 40
-/**
- * Child chips inherit the quick-action style's 10dp vertical padding.
- * 34dp clips the label. 48dp leaves room for the icon and descenders.
- */
-internal const val WriterMenuChipHeightDp = 48
-/** Track around the child chips. Taller than the chips so the capsule does not crop them. */
-internal const val WriterChildTrackHeightDp = 60
-/** Add options use a taller row. */
-internal const val WriterCatalogRowHeightDp = 48
-/** Back arrow on sheets that cover the keys. */
-internal const val WriterSheetBackSizeDp = 36
+/** Child chips sit in a short track under the smart bar, same idea as the iOS row. */
+internal const val WriterMenuChipHeightDp = 40
+/** Track around the child chips. Just tall enough for the chip and a little inset. */
+internal const val WriterChildTrackHeightDp = 44
+/** Add options stay compact so the list fits the key area. */
+internal const val WriterCatalogRowHeightDp = 36
+/** Back arrow sits on a content row. It does not get a row of its own. */
+internal const val WriterSheetBackSizeDp = 32
 
 /** Draft transforms. Rewrite and translate open a child menu. Grammar and suggest open the sheet under this row. */
 internal val WriterBarTools = listOf(
@@ -218,6 +219,18 @@ internal fun WriterMoreButton(
     )
 }
 
+@Composable
+internal fun WriterSettingsButton(
+    modifier: Modifier = Modifier,
+) {
+    WriterIconSlot(
+        modifier = modifier,
+        imageVector = Icons.Default.Settings,
+        contentDescription = "settings",
+        onClick = { FlorisImeService.launchSettings() },
+    )
+}
+
 /** Cursor, undo, and clipboard actions. Fills the key area and leaves the smart bar up. */
 @Composable
 fun WriterToolsPanel() {
@@ -227,8 +240,7 @@ fun WriterToolsPanel() {
     val app = context.applicationContext as? FlorisApplication
 
     WriterKeySheet {
-        WriterSheetBackButton(onClick = { WriterEditStore.closeTools() })
-        PanelRow {
+        PanelRow(verticalAlignment = Alignment.Top) {
             PanelChip("Left", Icons.AutoMirrored.Filled.KeyboardArrowLeft) {
                 keyboardManager.handleArrow(KeyCode.ARROW_LEFT)
             }
@@ -241,6 +253,7 @@ fun WriterToolsPanel() {
             PanelChip("Down", Icons.Filled.KeyboardArrowDown) {
                 keyboardManager.handleArrow(KeyCode.ARROW_DOWN)
             }
+            WriterSheetBackButton(onClick = { WriterEditStore.closeTools() })
         }
         PanelRow {
             PanelChip("Start", Icons.Filled.FirstPage) {
@@ -280,16 +293,19 @@ internal fun WriterKeySheet(content: @Composable ColumnScope.() -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(horizontal = 8.dp, vertical = 2.dp),
+            verticalArrangement = Arrangement.spacedBy(3.dp),
             content = content,
         )
     }
 }
 
-/** Arrow in the top-right corner. Closes the sheet covering the keys. */
+/** Arrow that closes the sheet. Callers place it; it does not claim a full row. */
 @Composable
-internal fun WriterSheetBackButton(onClick: () -> Unit) {
+internal fun WriterSheetBackButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val keyStyle = rememberSnyggThemeQuery(FlorisImeUi.Key.elementName)
     val pressedStyle = rememberSnyggThemeQuery(
         FlorisImeUi.Key.elementName,
@@ -302,40 +318,38 @@ internal fun WriterSheetBackButton(onClick: () -> Unit) {
     } else {
         keyStyle.background(default = Color.DarkGray)
     }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End,
+    Box(
+        modifier = modifier
+            .size(WriterSheetBackSizeDp.dp)
+            .clip(CircleShape)
+            .background(fill)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .size(WriterSheetBackSizeDp.dp)
-                .clip(CircleShape)
-                .background(fill)
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
-                    onClick = onClick,
-                ),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "back",
-                tint = keyStyle.foreground(default = Color.White),
-                modifier = Modifier.size(18.dp),
-            )
-        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+            contentDescription = "back",
+            tint = keyStyle.foreground(default = Color.White),
+            modifier = Modifier.size(16.dp),
+        )
     }
 }
 
 @Composable
-private fun ColumnScope.PanelRow(content: @Composable RowScope.() -> Unit) {
+private fun ColumnScope.PanelRow(
+    verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
+    content: @Composable RowScope.() -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .weight(1f),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        verticalAlignment = verticalAlignment,
         content = content,
     )
 }
@@ -368,7 +382,7 @@ private fun RowScope.PanelChip(
         modifier = Modifier
             .weight(1f)
             .fillMaxHeight()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(4.dp))
             .background(fill)
             .clickable(
                 interactionSource = interactionSource,
@@ -572,45 +586,51 @@ fun WriterToolsBar(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.CenterStart,
     ) {
-        Row(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
         ) {
+            val viewport = this.maxWidth
             Row(
                 modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
+                    .fillMaxSize()
                     .horizontalScroll(chipScroll),
                 horizontalArrangement = Arrangement.spacedBy(WriterChipGap),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                leading.forEach { action ->
-                    val mode = modeForWriterAction(action)
-                    val offeringUndo = edit.flashVisible && edit.flashMode == mode
-                    ToolChip(
-                        label = if (offeringUndo) {
-                            stringRes(R.string.quick_action__undo)
-                        } else {
-                            stringRes(action.labelRes)
-                        },
-                        icon = if (offeringUndo) Icons.AutoMirrored.Filled.Undo else writerModeIcon(mode),
-                        code = action.data.code,
-                        selected = offeringUndo || (menuOpen && writerUi.mode == mode),
-                        onClick = {
-                            if (offeringUndo) {
-                                (context.applicationContext as? FlorisApplication)
-                                    ?.onHostWriterUndoRequested()
+                Row(
+                    modifier = Modifier.widthIn(min = viewport),
+                    horizontalArrangement = Arrangement.spacedBy(WriterChipGap),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    leading.forEach { action ->
+                        val mode = modeForWriterAction(action)
+                        val offeringUndo = edit.flashVisible && edit.flashMode == mode
+                        ToolChip(
+                            label = if (offeringUndo) {
+                                stringRes(R.string.quick_action__undo)
                             } else {
-                                fire(action.data)
-                            }
-                        },
-                    )
+                                stringRes(action.labelRes)
+                            },
+                            icon = if (offeringUndo) Icons.AutoMirrored.Filled.Undo else writerModeIcon(mode),
+                            code = action.data.code,
+                            selected = offeringUndo || (menuOpen && writerUi.mode == mode),
+                            onClick = {
+                                if (offeringUndo) {
+                                    (context.applicationContext as? FlorisApplication)
+                                        ?.onHostWriterUndoRequested()
+                                } else {
+                                    fire(action.data)
+                                }
+                            },
+                        )
+                    }
+                    WriterMicButton()
                 }
+                WriterSettingsButton()
+                WriterMoreButton()
             }
-            WriterMicButton()
-            WriterMoreButton()
         }
     }
 }
@@ -648,7 +668,7 @@ fun WriterChildMenu(
         elementName = FlorisImeUi.SmartbarActionsOverflow.elementName,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 10.dp, vertical = 8.dp)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
             .height(WriterChildTrackHeightDp.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
@@ -756,22 +776,31 @@ fun WriterCatalogPanel() {
     }
 
     WriterKeySheet {
-        WriterSheetBackButton(onClick = { back() })
-        SnyggColumn(
+        Box(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+                .fillMaxWidth(),
         ) {
-            options.forEach { option ->
-                WriterCatalogRow(
-                    label = option.label,
-                    mode = writerUi.mode,
-                    code = code,
-                    onClick = { add(option) },
-                )
+            SnyggColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(end = 40.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                options.forEach { option ->
+                    WriterCatalogRow(
+                        label = option.label,
+                        mode = writerUi.mode,
+                        code = code,
+                        onClick = { add(option) },
+                    )
+                }
             }
+            WriterSheetBackButton(
+                onClick = { back() },
+                modifier = Modifier.align(Alignment.TopEnd),
+            )
         }
     }
 }
