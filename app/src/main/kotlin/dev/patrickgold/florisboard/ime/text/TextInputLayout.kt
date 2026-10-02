@@ -100,8 +100,7 @@ fun TextInputLayout(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(FlorisImeSizing.keyboardUiHeight())
-                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                    .height(FlorisImeSizing.keyboardUiHeight()),
             ) {
                 if (app != null && hostSheet != null) {
                     hostSheet.Content(

@@ -763,6 +763,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             return@batchEdit
         }
         if (data.code == KeyCode.VOICE_INPUT) {
+            WriterEditStore.hideFlash()
             toggleVoiceInput()
             return@batchEdit
         }

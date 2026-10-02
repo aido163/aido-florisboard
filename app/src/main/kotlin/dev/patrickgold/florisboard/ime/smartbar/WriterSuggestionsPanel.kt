@@ -25,7 +25,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
@@ -43,12 +42,10 @@ import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.FlorisApplication
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.ime.input.LocalInputFeedbackController
-import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyData
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import org.florisboard.lib.compose.stringRes
 import org.florisboard.lib.snygg.SnyggSelector
-import org.florisboard.lib.snygg.ui.SnyggBox
 import org.florisboard.lib.snygg.ui.SnyggColumn
 import org.florisboard.lib.snygg.ui.SnyggIcon
 import org.florisboard.lib.snygg.ui.SnyggRow
@@ -65,7 +62,6 @@ internal const val WriterThinkingRowHeightDp = 72
 @Composable
 fun WriterSuggestionsPanel(
     ui: WriterUi,
-    fillIme: Boolean = false,
 ) {
     val context = LocalContext.current
 
@@ -74,44 +70,36 @@ fun WriterSuggestionsPanel(
         app.onHostGrammarChipAccepted(text)
     }
 
-    val panelHeight = if (fillIme) {
-        FlorisImeSizing.imeUiHeight()
-    } else {
-        FlorisImeSizing.keyboardUiHeight()
-    }
-
-    SnyggBox(
-        elementName = FlorisImeUi.SmartbarActionsOverflow.elementName,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(panelHeight),
-    ) {
-        SnyggColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            if (ui.thinking) {
-                WriterSuggestionLine(
-                    text = stringRes(R.string.writer_tools__thinking),
-                    enabled = false,
-                    onClick = {},
-                    modifier = Modifier.height(WriterThinkingRowHeightDp.dp),
-                )
-            } else {
-                SnyggColumn(
-                    modifier = Modifier
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    ui.texts.forEach { text ->
-                        WriterSuggestionLine(
-                            text = text,
-                            enabled = ui.selectable,
-                            onClick = { accept(text) },
-                            modifier = Modifier.height(WriterSuggestionRowHeightDp.dp),
-                        )
-                    }
+    WriterKeySheet {
+        WriterSheetBackButton(onClick = {
+            context.applicationContext.let { appContext ->
+                (appContext as? FlorisApplication)?.onHostWriterBackRequested()
+            }
+        })
+        if (ui.thinking) {
+            WriterSuggestionLine(
+                text = stringRes(R.string.writer_tools__thinking),
+                enabled = false,
+                onClick = {},
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(WriterThinkingRowHeightDp.dp),
+            )
+        } else {
+            SnyggColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                ui.texts.forEach { text ->
+                    WriterSuggestionLine(
+                        text = text,
+                        enabled = ui.selectable,
+                        onClick = { accept(text) },
+                        modifier = Modifier.height(WriterSuggestionRowHeightDp.dp),
+                    )
                 }
             }
         }
