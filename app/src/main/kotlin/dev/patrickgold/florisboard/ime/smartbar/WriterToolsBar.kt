@@ -27,6 +27,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -41,12 +42,23 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.Redo
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.AutoFixHigh
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.ContentCut
+import androidx.compose.material.icons.filled.ContentPaste
+import androidx.compose.material.icons.filled.FirstPage
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.KeyboardVoice
+import androidx.compose.material.icons.filled.LastPage
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Spellcheck
 import androidx.compose.material.icons.filled.Translate
@@ -90,8 +102,15 @@ internal data class WriterBarAction(
 /** Stitch smartbar: 34dp ghost pills, 40dp back, compact selected variant. */
 internal const val WriterChipHeightDp = 34
 internal const val WriterBackSizeDp = 40
+/**
+ * Child chips inherit the quick-action style's 10dp vertical padding.
+ * 34dp clips the label. 48dp leaves room for the icon and descenders.
+ */
+internal const val WriterMenuChipHeightDp = 48
+/** Track around the child chips. Taller than the chips so the capsule does not crop them. */
+internal const val WriterChildTrackHeightDp = 60
 /** Add options use a taller row. */
-internal const val WriterCatalogRowHeightDp = 44
+internal const val WriterCatalogRowHeightDp = 48
 /** Square cards in the three-dot panel. */
 internal const val WriterPanelCardHeightDp = 52
 
@@ -226,24 +245,40 @@ fun WriterToolsPanel() {
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             PanelRow {
-                PanelChip("Left") { keyboardManager.handleArrow(KeyCode.ARROW_LEFT) }
-                PanelChip("Right") { keyboardManager.handleArrow(KeyCode.ARROW_RIGHT) }
-                PanelChip("Up") { keyboardManager.handleArrow(KeyCode.ARROW_UP) }
-                PanelChip("Down") { keyboardManager.handleArrow(KeyCode.ARROW_DOWN) }
+                PanelChip("Left", Icons.AutoMirrored.Filled.KeyboardArrowLeft) {
+                    keyboardManager.handleArrow(KeyCode.ARROW_LEFT)
+                }
+                PanelChip("Right", Icons.AutoMirrored.Filled.KeyboardArrowRight) {
+                    keyboardManager.handleArrow(KeyCode.ARROW_RIGHT)
+                }
+                PanelChip("Up", Icons.Filled.KeyboardArrowUp) {
+                    keyboardManager.handleArrow(KeyCode.ARROW_UP)
+                }
+                PanelChip("Down", Icons.Filled.KeyboardArrowDown) {
+                    keyboardManager.handleArrow(KeyCode.ARROW_DOWN)
+                }
             }
             PanelRow {
-                PanelChip("Start") { keyboardManager.handleArrow(KeyCode.MOVE_START_OF_LINE) }
-                PanelChip("End") { keyboardManager.handleArrow(KeyCode.MOVE_END_OF_LINE) }
+                PanelChip("Start", Icons.Filled.FirstPage) {
+                    keyboardManager.handleArrow(KeyCode.MOVE_START_OF_LINE)
+                }
+                PanelChip("End", Icons.Filled.LastPage) {
+                    keyboardManager.handleArrow(KeyCode.MOVE_END_OF_LINE)
+                }
             }
             PanelRow {
-                PanelChip("Undo") { app?.onHostWriterUndoRequested() }
-                PanelChip("Redo") { app?.onHostWriterRedoRequested() }
+                PanelChip("Undo", Icons.AutoMirrored.Filled.Undo) {
+                    app?.onHostWriterUndoRequested()
+                }
+                PanelChip("Redo", Icons.AutoMirrored.Filled.Redo) {
+                    app?.onHostWriterRedoRequested()
+                }
             }
             PanelRow {
-                PanelChip("Paste") { editorInstance.performClipboardPaste() }
-                PanelChip("Copy") { editorInstance.performClipboardCopy() }
-                PanelChip("Cut") { editorInstance.performClipboardCut() }
-                PanelChip("Select all") { editorInstance.performClipboardSelectAll() }
+                PanelChip("Paste", Icons.Filled.ContentPaste) { editorInstance.performClipboardPaste() }
+                PanelChip("Copy", Icons.Filled.ContentCopy) { editorInstance.performClipboardCopy() }
+                PanelChip("Cut", Icons.Filled.ContentCut) { editorInstance.performClipboardCut() }
+                PanelChip("Select all", Icons.Filled.SelectAll) { editorInstance.performClipboardSelectAll() }
             }
         }
     }
@@ -264,6 +299,7 @@ private fun PanelRow(content: @Composable RowScope.() -> Unit) {
 @Composable
 private fun RowScope.PanelChip(
     label: String,
+    icon: ImageVector,
     onClick: () -> Unit,
 ) {
     val inputFeedbackController = LocalInputFeedbackController.current
@@ -301,11 +337,22 @@ private fun RowScope.PanelChip(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
-        SnyggText(
-            elementName = "$elementName-text",
-            selector = selector,
-            text = label,
-        )
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
+        ) {
+            SnyggIcon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+            )
+            SnyggText(
+                elementName = "$elementName-text",
+                selector = selector,
+                text = writerChipTitle(label),
+            )
+        }
     }
 }
 
@@ -569,9 +616,8 @@ fun WriterChildMenu(
         elementName = FlorisImeUi.SmartbarActionsOverflow.elementName,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 10.dp, vertical = 6.dp)
-            .height(48.dp)
-            .clip(CircleShape),
+            .padding(horizontal = 10.dp, vertical = 8.dp)
+            .height(WriterChildTrackHeightDp.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
         Row(
@@ -620,7 +666,7 @@ private fun WriterMenuChip(
         attributes = attributes,
         selector = selector,
         modifier = Modifier
-            .height(WriterChipHeightDp.dp)
+            .height(WriterMenuChipHeightDp.dp)
             .clip(CircleShape),
         clickAndSemanticsModifier = Modifier
             .padding(horizontal = WriterChipPadH)
@@ -672,6 +718,11 @@ fun WriterCatalogPanel() {
         app.onHostWriterChipAdded(option.id)
     }
 
+    fun back() {
+        val app = context.applicationContext as? FlorisApplication ?: return
+        app.onHostWriterBackRequested()
+    }
+
     SnyggBox(
         elementName = FlorisImeUi.SmartbarActionsOverflow.elementName,
         modifier = Modifier
@@ -679,6 +730,16 @@ fun WriterCatalogPanel() {
             .height(FlorisImeSizing.keyboardUiHeight()),
     ) {
         SnyggColumn(modifier = Modifier.fillMaxSize()) {
+            WriterCatalogRow(
+                label = "back",
+                mode = writerUi.mode,
+                code = code,
+                icon = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                onClick = { back() },
+                modifier = Modifier
+                    .padding(horizontal = 12.dp)
+                    .padding(top = 12.dp),
+            )
             SnyggColumn(
                 modifier = Modifier
                     .weight(1f)
@@ -704,6 +765,8 @@ private fun WriterCatalogRow(
     label: String,
     mode: String,
     code: Int,
+    icon: ImageVector = writerModeIcon(mode),
+    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     val inputFeedbackController = LocalInputFeedbackController.current
@@ -716,7 +779,7 @@ private fun WriterCatalogRow(
         elementName = elementName,
         attributes = attributes,
         selector = selector,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(WriterCatalogRowHeightDp.dp)
             .clip(CircleShape),
@@ -743,7 +806,7 @@ private fun WriterCatalogRow(
         horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
     ) {
         SnyggIcon(
-            imageVector = writerModeIcon(mode),
+            imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(14.dp),
         )
