@@ -22,13 +22,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 /**
- * Writer navigation. The resting bar is [TOOLS]. A tool tap opens [HOME],
- * which covers the keyboard. Child chips replace the header inside that
- * panel. Suggest skips the panel and opens [RESULTS] on the chip sheet.
+ * Nested writer-tool navigation: tools → child chips → result list.
+ * Suggest and grammar skip VARIANTS and open RESULTS thinking on the same stack.
  */
 enum class WriterLayer {
     TOOLS,
-    HOME,
     VARIANTS,
     RESULTS,
 }
@@ -45,30 +43,15 @@ data class WriterUi(
     val texts: List<String> = emptyList(),
     val thinking: Boolean = false,
     val selectable: Boolean = true,
-    /** Vertical catalog list is open in the writer panel. */
+    /** Vertical catalog list is open over the keys. */
     val catalogOpen: Boolean = false,
     /** Bumped when saved chips change so the bar recomposes. */
     val chipEpoch: Int = 0,
-    /** Child chips replace the tool header inside the writer panel. */
-    val childrenOpen: Boolean = false,
-    /** Focused field had no draft when the panel opened. */
-    val emptyDraft: Boolean = false,
 ) {
     val nestedOpen: Boolean get() = layer != WriterLayer.TOOLS
 
-    /** Suggest results and the writer home cover smartbar + keys in place. */
-    val coversIme: Boolean get() = layer == WriterLayer.RESULTS || layer == WriterLayer.HOME
-
-    /**
-     * Fix, rewrite, translate, and humanize paint [WriterHomePanel].
-     * Suggest results stay on the chip sheet.
-     */
-    val showsWriterPanel: Boolean
-        get() = when (layer) {
-            WriterLayer.HOME, WriterLayer.VARIANTS -> true
-            WriterLayer.RESULTS -> mode.isNotBlank() && mode != "suggest"
-            WriterLayer.TOOLS -> false
-        }
+    /** RESULTS (Suggest and writer transforms) cover smartbar + keys in place. */
+    val coversIme: Boolean get() = layer == WriterLayer.RESULTS
 
     val coversKeys: Boolean get() = false
 }
@@ -177,10 +160,7 @@ object WriterNav {
 
     /** Opens the vertical catalog. A second call closes it. */
     fun openCatalog(current: WriterUi): WriterUi {
-        val onPanel = current.layer == WriterLayer.VARIANTS ||
-            current.layer == WriterLayer.HOME ||
-            current.layer == WriterLayer.RESULTS
-        if (!onPanel || current.mode.isBlank()) return current
+        if (current.layer != WriterLayer.VARIANTS || current.mode.isBlank()) return current
         if (current.catalogOpen) return current.copy(catalogOpen = false)
         if (!canAdd(current.mode)) return current
         return current.copy(catalogOpen = true)
@@ -218,29 +198,6 @@ object WriterNav {
         return WriterUi(layer = WriterLayer.VARIANTS, mode = mode)
     }
 
-    /** Full-keyboard tool panel. Children stay collapsed until the chevron opens them. */
-    fun openHome(mode: String, emptyDraft: Boolean = false): WriterUi =
-        WriterUi(
-            layer = WriterLayer.HOME,
-            mode = mode,
-            emptyDraft = emptyDraft,
-        )
-
-    fun toggleChildren(current: WriterUi): WriterUi {
-        if (current.mode.isBlank() || skipsVariants(current.mode)) return current
-        if (current.layer == WriterLayer.TOOLS) return current
-        return current.copy(childrenOpen = !current.childrenOpen, catalogOpen = false)
-    }
-
-    fun closeChildren(current: WriterUi): WriterUi =
-        if (current.childrenOpen || current.catalogOpen) {
-            current.copy(childrenOpen = false, catalogOpen = false)
-        } else {
-            current
-        }
-
-    fun dismiss(): WriterUi = WriterUi()
-
     /** Suggest / grammar have no child chips — RESULTS thinking, then the list. */
     fun startResults(mode: String, variant: WriterVariant): WriterUi =
         WriterUi(
@@ -262,8 +219,6 @@ object WriterNav {
             texts = emptyList(),
             thinking = true,
             catalogOpen = false,
-            childrenOpen = false,
-            emptyDraft = false,
         )
     }
 
@@ -303,13 +258,11 @@ object WriterNav {
 
     fun back(current: WriterUi): WriterUi {
         if (current.catalogOpen) return current.copy(catalogOpen = false)
-        if (current.childrenOpen) return current.copy(childrenOpen = false)
         return when (current.layer) {
             WriterLayer.RESULTS ->
                 if (skipsVariants(current.mode)) WriterUi()
                 else WriterUi(layer = WriterLayer.VARIANTS, mode = current.mode)
-            WriterLayer.HOME,
-            WriterLayer.VARIANTS,
+            WriterLayer.VARIANTS -> WriterUi()
             WriterLayer.TOOLS -> WriterUi()
         }
     }

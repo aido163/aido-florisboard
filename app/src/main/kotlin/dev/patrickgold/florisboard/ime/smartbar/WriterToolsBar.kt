@@ -352,7 +352,7 @@ private fun WriterIconSlot(
     }
 }
 
-internal fun keyCodeForWriterMode(mode: String): Int = when (mode) {
+private fun keyCodeForWriterMode(mode: String): Int = when (mode) {
     "grammar" -> KeyCode.GRAMMAR
     "rewrite" -> KeyCode.REWRITE
     "translate" -> KeyCode.TRANSLATE
@@ -531,7 +531,7 @@ fun WriterToolsBar(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         when (writerUi.layer) {
-            WriterLayer.TOOLS, WriterLayer.HOME -> {
+            WriterLayer.TOOLS -> {
                 (WriterBarTools + WriterBarPrimary).forEach { action ->
                     ToolChip(
                         label = stringRes(action.labelRes),
