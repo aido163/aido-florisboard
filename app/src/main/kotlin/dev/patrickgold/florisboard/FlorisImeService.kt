@@ -381,7 +381,10 @@ class FlorisImeService : LifecycleInputMethodService() {
     }
 
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
-        (application as? FlorisApplication)?.onImeStartInputView()
+        (application as? FlorisApplication)?.onImeStartInputView(
+            packageName = info?.packageName,
+            fieldId = info?.fieldId ?: 0,
+        )
         flogInfo { "restarting=$restarting info=${info?.debugSummarize()}" }
         super.onStartInputView(info, restarting)
         if (info == null) return

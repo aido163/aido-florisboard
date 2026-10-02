@@ -40,8 +40,12 @@ import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.InlineSuggestionsStyleCache
 import dev.patrickgold.florisboard.ime.smartbar.Smartbar
+import dev.patrickgold.florisboard.ime.smartbar.WriterCatalogPanel
+import dev.patrickgold.florisboard.ime.smartbar.WriterEditStore
 import dev.patrickgold.florisboard.ime.smartbar.WriterNavStore
 import dev.patrickgold.florisboard.ime.smartbar.WriterSuggestionsPanel
+import dev.patrickgold.florisboard.ime.smartbar.WriterToolsPanel
+import dev.patrickgold.florisboard.ime.smartbar.WriterUndoStrip
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionsOverflowPanel
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyboardLayout
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
@@ -63,6 +67,7 @@ fun TextInputLayout(
     val state by keyboardManager.activeState.collectAsState()
     val evaluator by keyboardManager.activeEvaluator.collectAsState()
     val writerUi by WriterNavStore.ui.collectAsState()
+    val toolsOpen by WriterEditStore.toolsOpen.collectAsState()
     val voiceListening by keyboardManager.voiceListening.collectAsState()
 
     InlineSuggestionsStyleCache()
@@ -90,11 +95,17 @@ fun TextInputLayout(
                 }
             }
         } else {
+            // Extra row inside the measured window so the key rows keep their height.
+            WriterUndoStrip()
             Smartbar()
             if (voiceListening) {
                 VoiceListeningBar(onStop = { keyboardManager.stopVoiceInput() })
             }
-            if (writerUi.coversKeys) {
+            if (toolsOpen) {
+                WriterToolsPanel()
+            } else if (writerUi.catalogOpen) {
+                WriterCatalogPanel()
+            } else if (writerUi.coversKeys) {
                 WriterSuggestionsPanel(writerUi)
             } else if (state.isActionsOverflowVisible) {
                 QuickActionsOverflowPanel()

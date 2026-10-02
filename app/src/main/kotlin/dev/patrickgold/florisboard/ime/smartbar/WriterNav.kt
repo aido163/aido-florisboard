@@ -43,7 +43,7 @@ data class WriterUi(
     val texts: List<String> = emptyList(),
     val thinking: Boolean = false,
     val selectable: Boolean = true,
-    /** Variant row is showing catalog ids the user has not saved yet. */
+    /** Vertical catalog list is open over the keys. */
     val catalogOpen: Boolean = false,
     /** Bumped when saved chips change so the bar recomposes. */
     val chipEpoch: Int = 0,
@@ -158,8 +158,10 @@ object WriterNav {
     fun canAdd(mode: String): Boolean =
         variantsFor(mode).size < MAX && availableFor(mode).isNotEmpty()
 
+    /** Opens the vertical catalog. A second call closes it. */
     fun openCatalog(current: WriterUi): WriterUi {
         if (current.layer != WriterLayer.VARIANTS || current.mode.isBlank()) return current
+        if (current.catalogOpen) return current.copy(catalogOpen = false)
         if (!canAdd(current.mode)) return current
         return current.copy(catalogOpen = true)
     }
@@ -216,6 +218,7 @@ object WriterNav {
             variant = variant,
             texts = emptyList(),
             thinking = true,
+            catalogOpen = false,
         )
     }
 
@@ -265,6 +268,103 @@ object WriterNav {
     }
 
     fun reset(): WriterUi = WriterUi()
+}
+
+/**
+ * Last whole-field writer commits. Newest entry is last.
+ * A push stores the text from immediately before the replace and drops redo.
+ * Empty or identical text does not push. Cap is [CAP].
+ */
+data class WriterEditUi(
+    val undo: List<String> = emptyList(),
+    val redo: List<String> = emptyList(),
+    val flashEpoch: Int = 0,
+    val flashVisible: Boolean = false,
+) {
+    val canUndo: Boolean get() = undo.isNotEmpty()
+    val canRedo: Boolean get() = redo.isNotEmpty()
+}
+
+object WriterEdit {
+    const val CAP = 10
+
+    fun push(current: WriterEditUi, previous: String, committed: String): WriterEditUi {
+        if (previous.isEmpty() || previous == committed) return current
+        return current.copy(
+            undo = (current.undo + previous).takeLast(CAP),
+            redo = emptyList(),
+            flashEpoch = current.flashEpoch + 1,
+            flashVisible = true,
+        )
+    }
+
+    /** Restores the newest commit. [field] is the text on screen, kept for redo. */
+    fun undo(current: WriterEditUi, field: String): Pair<WriterEditUi, String?> {
+        if (current.undo.isEmpty()) return current to null
+        val restored = current.undo.last()
+        val redo = if (field != restored) (current.redo + field).takeLast(CAP) else current.redo
+        return current.copy(
+            undo = current.undo.dropLast(1),
+            redo = redo,
+            flashVisible = false,
+        ) to restored
+    }
+
+    fun redo(current: WriterEditUi, field: String): Pair<WriterEditUi, String?> {
+        if (current.redo.isEmpty()) return current to null
+        val restored = current.redo.last()
+        val undo = if (field != restored) (current.undo + field).takeLast(CAP) else current.undo
+        return current.copy(
+            undo = undo,
+            redo = current.redo.dropLast(1),
+            flashVisible = false,
+        ) to restored
+    }
+
+    fun hideFlash(current: WriterEditUi): WriterEditUi =
+        if (current.flashVisible) current.copy(flashVisible = false) else current
+
+    fun clear(current: WriterEditUi): WriterEditUi {
+        if (current.undo.isEmpty() && current.redo.isEmpty() && !current.flashVisible) return current
+        return current.copy(undo = emptyList(), redo = emptyList(), flashVisible = false)
+    }
+}
+
+object WriterEditStore {
+    private val _ui = MutableStateFlow(WriterEditUi())
+    val ui: StateFlow<WriterEditUi> = _ui.asStateFlow()
+
+    private val _toolsOpen = MutableStateFlow(false)
+    val toolsOpen: StateFlow<Boolean> = _toolsOpen.asStateFlow()
+
+    fun set(value: WriterEditUi) {
+        _ui.value = value
+    }
+
+    fun push(previous: String, committed: String) {
+        _ui.update { WriterEdit.push(it, previous, committed) }
+    }
+
+    fun hideFlash() {
+        _ui.update(WriterEdit::hideFlash)
+    }
+
+    fun clear() {
+        _ui.update(WriterEdit::clear)
+        _toolsOpen.value = false
+    }
+
+    fun toggleTools() {
+        val next = !_toolsOpen.value
+        _toolsOpen.value = next
+        if (next) {
+            WriterNavStore.update { it.copy(catalogOpen = false) }
+        }
+    }
+
+    fun closeTools() {
+        _toolsOpen.value = false
+    }
 }
 
 object WriterNavStore {

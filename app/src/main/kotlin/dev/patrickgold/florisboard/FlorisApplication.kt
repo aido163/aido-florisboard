@@ -93,8 +93,10 @@ open class FlorisApplication : Application() {
     /**
      * Hook for the host to sync RN-owned keyboard_shared_config into JetPref.
      * Called after prefs init and from [FlorisImeService.onStartInputView].
+     * [packageName] / [fieldId] identify the focused editor so the host can
+     * drop a draft-language lock when the user switches fields.
      */
-    open fun onImeStartInputView() {}
+    open fun onImeStartInputView(packageName: String? = null, fieldId: Int = 0) {}
 
     /**
      * Called from [FlorisImeService.onFinishInputView] so the host can drop
@@ -164,6 +166,12 @@ open class FlorisApplication : Application() {
      * Host hook for back from nested writer variants or results.
      */
     open fun onHostWriterBackRequested() {}
+
+    /** Restore the newest writer commit through the host replace path. */
+    open fun onHostWriterUndoRequested() {}
+
+    /** Walk back toward the latest writer commit. */
+    open fun onHostWriterRedoRequested() {}
 
     /**
      * Host hook when a writer-transform chip is tapped. Return true if the

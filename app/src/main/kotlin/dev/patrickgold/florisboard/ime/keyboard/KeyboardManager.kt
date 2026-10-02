@@ -32,6 +32,7 @@ import dev.patrickgold.florisboard.clipboardManager
 import dev.patrickgold.florisboard.editorInstance
 import dev.patrickgold.florisboard.extensionManager
 import dev.patrickgold.florisboard.ime.ImeUiMode
+import dev.patrickgold.florisboard.ime.smartbar.WriterEditStore
 import dev.patrickgold.florisboard.ime.core.DisplayLanguageNamesIn
 import dev.patrickgold.florisboard.ime.core.Subtype
 import dev.patrickgold.florisboard.ime.core.SubtypePreset
@@ -112,12 +113,14 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         field = MutableStateFlow<ComputingEvaluator>(DefaultComputingEvaluator)
 
     private val voiceInput = VoiceInputController(appContext) { text ->
+        WriterEditStore.clear()
         editorInstance.commitText(text)
     }
     val voiceListening: StateFlow<Boolean>
         get() = voiceInput.listening
 
     fun toggleVoiceInput() {
+        WriterEditStore.hideFlash()
         voiceInput.toggle()
     }
 
@@ -309,6 +312,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 ?.onHostGrammarChipAccepted(candidate.text.toString())
             return
         }
+        WriterEditStore.clear()
         nlpManager.clearPinnedSuggestions()
         scope.launch {
             candidate.sourceProvider?.notifySuggestionAccepted(subtypeManager.activeSubtype, candidate)
@@ -320,6 +324,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
 
     fun commitGesture(word: String) {
+        WriterEditStore.clear()
         editorInstance.commitGesture(fixCase(word))
     }
 
@@ -451,6 +456,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             it.isManualSelectionModeEnd = false
         }
         revertPreviouslyAcceptedCandidate()
+        WriterEditStore.clear()
         editorInstance.deleteBackwards(unit)
     }
 
@@ -464,6 +470,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             it.isManualSelectionModeEnd = false
         }
         revertPreviouslyAcceptedCandidate()
+        WriterEditStore.clear()
         editorInstance.deleteForwards(unit)
     }
 
@@ -471,6 +478,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
      * Handles a [KeyCode.ENTER] event.
      */
     private fun handleEnter() {
+        WriterEditStore.clear()
         val info = editorInstance.activeInfo
         val isShiftPressed = inputEventDispatcher.isPressed(KeyCode.SHIFT)
         if (editorInstance.tryPerformEnterCommitRaw()) {
@@ -570,6 +578,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 candidate != null) { /* Do nothing */ } else {
             editorInstance.commitText(KeyCode.SPACE.toChar().toString())
         }
+        WriterEditStore.clear()
     }
 
     /**
@@ -595,6 +604,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 if (text.length == 2 && DoubleSpacePeriodMatcher.matches(text)) {
                     editorInstance.deleteBackwards(OperationUnit.CHARACTERS)
                     editorInstance.commitText(". ")
+                    WriterEditStore.clear()
                     return
                 }
             }
@@ -604,6 +614,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                 candidate != null) { /* Do nothing */ } else {
             editorInstance.commitText(KeyCode.SPACE.toChar().toString())
         }
+        WriterEditStore.clear()
     }
 
     /**
@@ -722,31 +733,37 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         // Suggest must run even if windowController is briefly null — chips/capture
         // do not need floating-window actions.
         if (data.code == KeyCode.SUGGEST) {
+            WriterEditStore.hideFlash()
             (appContext as? FlorisApplication)?.onHostSuggestRequested()
             return@batchEdit
         }
         if (data.code == KeyCode.GRAMMAR) {
+            WriterEditStore.hideFlash()
             (appContext as? FlorisApplication)?.onHostGrammarRequested()
             return@batchEdit
         }
         if (data.code == KeyCode.REWRITE) {
+            WriterEditStore.hideFlash()
             (appContext as? FlorisApplication)?.onHostRewriteRequested()
             return@batchEdit
         }
         if (data.code == KeyCode.TRANSLATE) {
+            WriterEditStore.hideFlash()
             (appContext as? FlorisApplication)?.onHostTranslateRequested()
             return@batchEdit
         }
         if (data.code == KeyCode.DETECT_AI) {
+            WriterEditStore.hideFlash()
             (appContext as? FlorisApplication)?.onHostDetectAiRequested()
             return@batchEdit
         }
         if (data.code == KeyCode.HUMANIZE) {
+            WriterEditStore.hideFlash()
             (appContext as? FlorisApplication)?.onHostHumanizeRequested()
             return@batchEdit
         }
         if (data.code == KeyCode.VOICE_INPUT) {
-            voiceInput.toggle()
+            toggleVoiceInput()
             return@batchEdit
         }
         val windowController = FlorisImeService.windowControllerOrNull() ?: return@batchEdit
@@ -833,6 +850,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
             KeyCode.VIEW_SYMBOLS2 -> activeState.keyboardMode = KeyboardMode.SYMBOLS2
             else -> {
                 if (activeState.imeUiMode == ImeUiMode.MEDIA) {
+                    WriterEditStore.clear()
                     nlpManager.getAutoCommitCandidate()?.let { commitCandidate(it) }
                     editorInstance.commitText(data.asString(isForDisplay = false))
                     return@batchEdit
@@ -845,12 +863,14 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                         KeyType.CHARACTER,
                         KeyType.NUMERIC -> {
                             val text = data.asString(isForDisplay = false)
+                            WriterEditStore.clear()
                             editorInstance.commitText(text)
                         }
                         else -> when (data.code) {
                             KeyCode.PHONE_PAUSE,
                             KeyCode.PHONE_WAIT -> {
                                 val text = data.asString(isForDisplay = false)
+                                WriterEditStore.clear()
                                 editorInstance.commitText(text)
                             }
                         }
@@ -861,6 +881,7 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
                             if (!UCharacter.isUAlphabetic(UCharacter.codePointAt(text, 0))) {
                                 nlpManager.getAutoCommitCandidate()?.let { commitCandidate(it) }
                             }
+                            WriterEditStore.clear()
                             editorInstance.commitChar(text)
                         }
                         else -> {

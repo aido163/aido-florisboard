@@ -347,7 +347,10 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             SuggestionBackButton(
-                onClick = { nlpManager.clearPinnedSuggestions() },
+                onClick = {
+                    WriterEditStore.hideFlash()
+                    nlpManager.clearPinnedSuggestions()
+                },
             )
             Box(
                 modifier = Modifier
@@ -356,7 +359,8 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
             ) {
                 CandidatesRow()
             }
-            WriterMicButton(Modifier.padding(end = 8.dp))
+            WriterMicButton()
+            WriterMoreButton(Modifier.padding(end = 8.dp))
         }
         return
     }
