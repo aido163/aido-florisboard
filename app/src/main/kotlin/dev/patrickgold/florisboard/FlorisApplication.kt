@@ -60,9 +60,9 @@ import java.lang.ref.WeakReference
 private var FlorisApplicationReference = WeakReference<FlorisApplication?>(null)
 
 /**
- * Host paints the assistant Suggest sheet over smartbar + keys. Must not
- * start an Activity — that would hide the keyboard and drop field focus.
- * The sheet covers the IME in place (same height; host app does not resize).
+ * Host paints the Suggest sheet over smartbar + keys. Must not start an
+ * Activity — that would hide the keyboard and drop field focus. The sheet
+ * covers the IME in place (same height; host app does not resize).
  */
 fun interface HostSuggestSheetRenderer {
     @Composable
@@ -180,8 +180,8 @@ open class FlorisApplication : Application() {
     open fun onHostGrammarChipAccepted(text: String): Boolean = false
 
     /**
-     * Host paints the shared assistant sheet over smartbar + keys for
-     * Suggest and writer RESULTS. Null falls back to
+     * Host paints the shared Suggest sheet over smartbar + keys for Suggest
+     * and writer RESULTS. Null falls back to
      * [dev.patrickgold.florisboard.ime.smartbar.WriterSuggestionsPanel].
      */
     @Volatile
