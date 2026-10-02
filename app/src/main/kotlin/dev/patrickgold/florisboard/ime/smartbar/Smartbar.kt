@@ -320,12 +320,14 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
 
     val candidates by nlpManager.activeCandidatesFlow.collectAsState()
     val writerUi by WriterNavStore.ui.collectAsState()
-    val showingSuggestionStrip = !writerUi.nestedOpen && candidates.any {
+    val edit by WriterEditStore.ui.collectAsState()
+    val undoOnChip = edit.flashVisible && edit.flashMode.isNotEmpty()
+    val showingSuggestionStrip = !undoOnChip && !writerUi.nestedOpen && candidates.any {
         nlpManager.isPinnedPending(it) ||
             nlpManager.isPinnedGrammar(it) ||
             it is WordSuggestionCandidate
     }
-    val showWriterBar = writerUi.nestedOpen || showWriterToolsRow(
+    val showWriterBar = undoOnChip || writerUi.nestedOpen || showWriterToolsRow(
         layout = smartbarLayout,
         hasSuggestionStrip = showingSuggestionStrip,
     )
@@ -334,6 +336,7 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
         WriterToolsBar(
             modifier = modifier
                 .fillMaxWidth()
+                .padding(vertical = 6.dp)
                 .height(FlorisImeSizing.smartbarHeight),
         )
         return

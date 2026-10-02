@@ -290,6 +290,8 @@ data class WriterEditUi(
     val redo: List<String> = emptyList(),
     val flashEpoch: Int = 0,
     val flashVisible: Boolean = false,
+    /** Tool mode whose chip shows Undo while [flashVisible]. Empty when no chip should change. */
+    val flashMode: String = "",
 ) {
     val canUndo: Boolean get() = undo.isNotEmpty()
     val canRedo: Boolean get() = redo.isNotEmpty()
@@ -298,13 +300,19 @@ data class WriterEditUi(
 object WriterEdit {
     const val CAP = 10
 
-    fun push(current: WriterEditUi, previous: String, committed: String): WriterEditUi {
+    fun push(
+        current: WriterEditUi,
+        previous: String,
+        committed: String,
+        mode: String = "",
+    ): WriterEditUi {
         if (previous.isEmpty() || previous == committed) return current
         return current.copy(
             undo = (current.undo + previous).takeLast(CAP),
             redo = emptyList(),
             flashEpoch = current.flashEpoch + 1,
             flashVisible = true,
+            flashMode = mode,
         )
     }
 
@@ -317,6 +325,7 @@ object WriterEdit {
             undo = current.undo.dropLast(1),
             redo = redo,
             flashVisible = false,
+            flashMode = "",
         ) to restored
     }
 
@@ -328,15 +337,22 @@ object WriterEdit {
             undo = undo,
             redo = current.redo.dropLast(1),
             flashVisible = false,
+            flashMode = "",
         ) to restored
     }
 
     fun hideFlash(current: WriterEditUi): WriterEditUi =
-        if (current.flashVisible) current.copy(flashVisible = false) else current
+        if (current.flashVisible || current.flashMode.isNotEmpty()) {
+            current.copy(flashVisible = false, flashMode = "")
+        } else {
+            current
+        }
 
     fun clear(current: WriterEditUi): WriterEditUi {
-        if (current.undo.isEmpty() && current.redo.isEmpty() && !current.flashVisible) return current
-        return current.copy(undo = emptyList(), redo = emptyList(), flashVisible = false)
+        if (current.undo.isEmpty() && current.redo.isEmpty() && !current.flashVisible && current.flashMode.isEmpty()) {
+            return current
+        }
+        return current.copy(undo = emptyList(), redo = emptyList(), flashVisible = false, flashMode = "")
     }
 }
 
@@ -351,8 +367,8 @@ object WriterEditStore {
         _ui.value = value
     }
 
-    fun push(previous: String, committed: String) {
-        _ui.update { WriterEdit.push(it, previous, committed) }
+    fun push(previous: String, committed: String, mode: String = "") {
+        _ui.update { WriterEdit.push(it, previous, committed, mode) }
     }
 
     fun hideFlash() {

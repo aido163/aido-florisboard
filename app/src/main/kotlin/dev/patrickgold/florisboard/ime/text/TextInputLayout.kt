@@ -47,7 +47,6 @@ import dev.patrickgold.florisboard.ime.smartbar.WriterLayer
 import dev.patrickgold.florisboard.ime.smartbar.WriterNavStore
 import dev.patrickgold.florisboard.ime.smartbar.WriterSuggestionsPanel
 import dev.patrickgold.florisboard.ime.smartbar.WriterToolsPanel
-import dev.patrickgold.florisboard.ime.smartbar.WriterUndoStrip
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionsOverflowPanel
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyboardLayout
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
@@ -84,7 +83,6 @@ fun TextInputLayout(
             .wrapContentHeight(),
     ) {
         // Tool row stays up. Output, the child menu, and the ⋯ panel sit under it.
-        WriterUndoStrip()
         Smartbar()
         if (showChildMenu) {
             WriterChildMenu(mode = writerUi.mode)
