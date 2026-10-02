@@ -29,7 +29,6 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -40,7 +39,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
@@ -64,7 +62,6 @@ import androidx.compose.material.icons.filled.KeyboardVoice
 import androidx.compose.material.icons.filled.LastPage
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.SelectAll
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Spellcheck
 import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Icon
@@ -85,7 +82,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.FlorisApplication
-import dev.patrickgold.florisboard.FlorisImeService
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.editorInstance
 import dev.patrickgold.florisboard.keyboardManager
@@ -219,18 +215,6 @@ internal fun WriterMoreButton(
             }
             WriterEditStore.toggleTools()
         },
-    )
-}
-
-@Composable
-internal fun WriterSettingsButton(
-    modifier: Modifier = Modifier,
-) {
-    WriterIconSlot(
-        modifier = modifier,
-        imageVector = Icons.Default.Settings,
-        contentDescription = "settings",
-        onClick = { FlorisImeService.launchSettings() },
     )
 }
 
@@ -588,51 +572,45 @@ fun WriterToolsBar(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.CenterStart,
     ) {
-        BoxWithConstraints(
+        Row(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            val viewport = this.maxWidth
             Row(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .weight(1f)
+                    .fillMaxHeight()
                     .horizontalScroll(chipScroll),
                 horizontalArrangement = Arrangement.spacedBy(WriterChipGap),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    modifier = Modifier.widthIn(min = viewport),
-                    horizontalArrangement = Arrangement.spacedBy(WriterChipGap),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    leading.forEach { action ->
-                        val mode = modeForWriterAction(action)
-                        val offeringUndo = edit.flashVisible && edit.flashMode == mode
-                        ToolChip(
-                            label = if (offeringUndo) {
-                                stringRes(R.string.quick_action__undo)
+                leading.forEach { action ->
+                    val mode = modeForWriterAction(action)
+                    val offeringUndo = edit.flashVisible && edit.flashMode == mode
+                    ToolChip(
+                        label = if (offeringUndo) {
+                            stringRes(R.string.quick_action__undo)
+                        } else {
+                            stringRes(action.labelRes)
+                        },
+                        icon = if (offeringUndo) Icons.AutoMirrored.Filled.Undo else writerModeIcon(mode),
+                        code = action.data.code,
+                        selected = offeringUndo || (menuOpen && writerUi.mode == mode),
+                        onClick = {
+                            if (offeringUndo) {
+                                (context.applicationContext as? FlorisApplication)
+                                    ?.onHostWriterUndoRequested()
                             } else {
-                                stringRes(action.labelRes)
-                            },
-                            icon = if (offeringUndo) Icons.AutoMirrored.Filled.Undo else writerModeIcon(mode),
-                            code = action.data.code,
-                            selected = offeringUndo || (menuOpen && writerUi.mode == mode),
-                            onClick = {
-                                if (offeringUndo) {
-                                    (context.applicationContext as? FlorisApplication)
-                                        ?.onHostWriterUndoRequested()
-                                } else {
-                                    fire(action.data)
-                                }
-                            },
-                        )
-                    }
-                    WriterMicButton()
+                                fire(action.data)
+                            }
+                        },
+                    )
                 }
-                WriterSettingsButton()
-                WriterMoreButton()
             }
+            WriterMicButton()
+            WriterMoreButton()
         }
     }
 }
