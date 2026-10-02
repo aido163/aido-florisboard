@@ -97,6 +97,19 @@
     <string name="quick_action__humanize__tooltip">make it sound like a text, not a draft</string>
     <string name="writer_tools__fix">fix grammar</string>
     <string name="writer_tools__thinking">thinking…</string>
+    <string name="writer_home__back">Back to keyboard</string>
+    <string name="writer_home__grammar_title">Nothing to check yet</string>
+    <string name="writer_home__grammar_body">Start writing and we\'ll flag anything worth fixing.</string>
+    <string name="writer_home__rewrite_title">Nothing to rewrite yet</string>
+    <string name="writer_home__rewrite_body">Add some text and we\'ll rewrite it in the style you choose.</string>
+    <string name="writer_home__translate_title">Nothing to translate yet</string>
+    <string name="writer_home__translate_body">Add some text and we\'ll translate it into the language you choose.</string>
+    <string name="writer_home__humanize_title">Nothing to humanize yet</string>
+    <string name="writer_home__humanize_body">Add some text and we\'ll make it sound more natural.</string>
+    <string name="writer_home__pick_style">Pick a style</string>
+    <string name="writer_home__pick_style_body">Choose one and we\'ll rewrite this draft.</string>
+    <string name="writer_home__pick_language">Pick a language</string>
+    <string name="writer_home__pick_language_body">Choose one and we\'ll translate this draft.</string>
     <string name="quick_action__undo" comment="Please mind the limited available space for the quick action strings">Undo</string>
     <string name="quick_action__undo__tooltip">Undo the last input</string>
     <string name="quick_action__redo" comment="Please mind the limited available space for the quick action strings">Redo</string>

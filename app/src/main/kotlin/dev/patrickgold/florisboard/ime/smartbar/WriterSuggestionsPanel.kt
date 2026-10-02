@@ -120,7 +120,7 @@ fun WriterSuggestionsPanel(
 }
 
 @Composable
-private fun WriterSuggestionLine(
+internal fun WriterSuggestionLine(
     text: String,
     enabled: Boolean,
     onClick: () -> Unit,

@@ -42,6 +42,7 @@ import dev.patrickgold.florisboard.ime.smartbar.InlineSuggestionsStyleCache
 import dev.patrickgold.florisboard.ime.smartbar.Smartbar
 import dev.patrickgold.florisboard.ime.smartbar.WriterCatalogPanel
 import dev.patrickgold.florisboard.ime.smartbar.WriterEditStore
+import dev.patrickgold.florisboard.ime.smartbar.WriterHomePanel
 import dev.patrickgold.florisboard.ime.smartbar.WriterNavStore
 import dev.patrickgold.florisboard.ime.smartbar.WriterSuggestionsPanel
 import dev.patrickgold.florisboard.ime.smartbar.WriterToolsPanel
@@ -77,7 +78,15 @@ fun TextInputLayout(
             .fillMaxWidth()
             .wrapContentHeight(),
     ) {
-        if (writerUi.coversIme) {
+        if (writerUi.showsWriterPanel) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(FlorisImeSizing.imeUiHeight()),
+            ) {
+                WriterHomePanel(writerUi)
+            }
+        } else if (writerUi.coversIme) {
             val app = context.applicationContext as? FlorisApplication
             val hostSheet = app?.hostSuggestSheet
             Box(

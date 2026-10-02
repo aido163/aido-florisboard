@@ -35,6 +35,8 @@ import dev.patrickgold.florisboard.ime.editor.EditorInstance
 import dev.patrickgold.florisboard.ime.keyboard.KeyboardManager
 import dev.patrickgold.florisboard.ime.media.emoji.FlorisEmojiCompat
 import dev.patrickgold.florisboard.ime.nlp.NlpManager
+import dev.patrickgold.florisboard.ime.smartbar.WriterNav
+import dev.patrickgold.florisboard.ime.smartbar.WriterNavStore
 import dev.patrickgold.florisboard.ime.text.gestures.GlideTypingManager
 import dev.patrickgold.florisboard.ime.theme.ThemeManager
 import dev.patrickgold.florisboard.lib.cache.CacheManager
@@ -166,6 +168,14 @@ open class FlorisApplication : Application() {
      * Host hook for back from nested writer variants or results.
      */
     open fun onHostWriterBackRequested() {}
+
+    /**
+     * Leave the writer panel and show the keys again.
+     * The keyboard process overrides this to clear an in-flight sheet.
+     */
+    open fun onHostWriterDismissRequested() {
+        WriterNavStore.set(WriterNav.dismiss())
+    }
 
     /** Restore the newest writer commit through the host replace path. */
     open fun onHostWriterUndoRequested() {}
