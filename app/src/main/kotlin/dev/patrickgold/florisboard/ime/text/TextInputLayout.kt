@@ -33,6 +33,7 @@ import dev.patrickgold.florisboard.FlorisApplication
 import dev.patrickgold.florisboard.R
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
+import dev.patrickgold.florisboard.ime.keyboard.voiceDictationSheetVisible
 import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.InlineSuggestionsStyleCache
 import dev.patrickgold.florisboard.ime.smartbar.Smartbar
@@ -67,6 +68,7 @@ fun TextInputLayout(
     val voicePresented by keyboardManager.voicePresented.collectAsState()
     val voiceTranscript by keyboardManager.voiceTranscript.collectAsState()
     val voiceNotice by keyboardManager.voiceNotice.collectAsState()
+    val voiceCaptureOnly by keyboardManager.voiceCaptureOnly.collectAsState()
 
     InlineSuggestionsStyleCache()
 
@@ -85,7 +87,7 @@ fun TextInputLayout(
         if (showChildMenu) {
             WriterChildMenu(mode = writerUi.mode)
         }
-        if (voicePresented) {
+        if (voiceDictationSheetVisible(voicePresented, voiceCaptureOnly)) {
             VoiceDictationSheet(
                 transcript = voiceTranscript,
                 notice = voiceNotice,

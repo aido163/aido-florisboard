@@ -35,6 +35,13 @@ class ComputingEvaluatorTest : FunSpec({
         DefaultComputingEvaluator.computeImageVector(data) shouldBe Icons.Default.KeyboardVoice
     }
 
+    test("draft mic shows the dictation sheet; context capture does not") {
+        voiceDictationSheetVisible(presented = true, captureOnly = false) shouldBe true
+        voiceDictationSheetVisible(presented = true, captureOnly = true) shouldBe false
+        voiceDictationSheetVisible(presented = false, captureOnly = true) shouldBe false
+        voiceDictationSheetVisible(presented = false, captureOnly = false) shouldBe false
+    }
+
     test("spoken dictation text uses the first recognition result") {
         spokenDictationText(listOf("hello maya", "hello")) shouldBe "hello maya"
         spokenDictationText(emptyList()) shouldBe ""

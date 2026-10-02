@@ -20,6 +20,13 @@ fun spokenDictationText(results: List<String>?): String {
     return results?.firstOrNull().orEmpty()
 }
 
+/**
+ * Draft mic owns the key-area dictation sheet. Conversation-context listen
+ * stays on the Suggest panel — showing this sheet unmounts that panel.
+ */
+fun voiceDictationSheetVisible(presented: Boolean, captureOnly: Boolean): Boolean =
+    presented && !captureOnly
+
 /** Finished phrases plus the live hypothesis, as one readable line. */
 fun dictationTranscript(segments: List<String>, partial: String): String {
     return (segments + partial)

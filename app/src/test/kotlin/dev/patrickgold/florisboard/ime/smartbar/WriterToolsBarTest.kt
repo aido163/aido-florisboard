@@ -65,9 +65,10 @@ class WriterToolsBarTest : FunSpec({
 
     test("stitch smartbar metrics") {
         WriterChipHeightDp shouldBe 34
-        WriterSelectedChipHeightDp shouldBe 32
+        WriterMenuChipHeightDp shouldBe WriterChipHeightDp
         WriterBackSizeDp shouldBe 40
-        WriterSuggestionRowHeightDp shouldBe 68
-        WriterThinkingRowHeightDp shouldBe 72
+        WriterChildTrackHeightDp shouldBe 42
+        WriterSuggestionRowHeightDp shouldBe 44
+        WriterThinkingRowHeightDp shouldBe 40
     }
 })

@@ -51,14 +51,14 @@ class VoiceInputController(
     val presented: StateFlow<Boolean> = presentedState
     val transcript: StateFlow<String> = transcriptState
     val notice: StateFlow<String> = noticeState
+    private val captureOnlyState = MutableStateFlow(false)
+    val captureOnly: StateFlow<Boolean> = captureOnlyState
 
     private val segments = mutableListOf<String>()
     private var partial = ""
     private var restarts = 0
     private var session = 0
     private var listenGeneration = 0
-    /** When true, [finish] does not call [commitText] (Suggest conversation context). */
-    private var captureOnly = false
 
     fun toggle() {
         if (Looper.myLooper() != Looper.getMainLooper()) {
@@ -68,7 +68,7 @@ class VoiceInputController(
         if (presentedState.value) {
             finish()
         } else {
-            captureOnly = false
+            captureOnlyState.value = false
             start()
         }
     }
@@ -85,8 +85,8 @@ class VoiceInputController(
         if (presentedState.value) {
             halt(clearSheet = true)
         }
-        captureOnly = true
-        start()
+        captureOnlyState.value = true
+        start(showSheet = false)
     }
 
     /** Stop listening and return the transcript without inserting. */
@@ -113,7 +113,7 @@ class VoiceInputController(
             return
         }
         val spoken = transcriptState.value.trim()
-        val insert = !captureOnly
+        val insert = !captureOnlyState.value
         halt(clearSheet = true)
         if (insert && spoken.isNotEmpty()) {
             commitText(spoken)
@@ -133,7 +133,7 @@ class VoiceInputController(
         session += 1
         listeningState.value = false
         restarts = 0
-        captureOnly = false
+        captureOnlyState.value = false
         try {
             recognizer?.cancel()
         } catch (_: Throwable) {
@@ -148,12 +148,12 @@ class VoiceInputController(
         }
     }
 
-    private fun start() {
+    private fun start(showSheet: Boolean = true) {
         if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO) !=
             PackageManager.PERMISSION_GRANTED
         ) {
             context.showShortToastSync("mic permission needed. grant it in aido.")
-            captureOnly = false
+            captureOnlyState.value = false
             return
         }
         session += 1
@@ -163,7 +163,9 @@ class VoiceInputController(
         restarts = 0
         transcriptState.value = ""
         noticeState.value = ""
-        presentedState.value = true
+        // Context capture keeps the Suggest sheet up. Flipping presented here
+        // unmounted that sheet, stopped the mic in onDispose, and blinked.
+        presentedState.value = showSheet
         beginListening(token)
     }
 

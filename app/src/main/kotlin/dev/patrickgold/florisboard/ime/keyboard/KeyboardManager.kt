@@ -124,6 +124,8 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
         get() = voiceInput.transcript
     val voiceNotice: StateFlow<String>
         get() = voiceInput.notice
+    val voiceCaptureOnly: StateFlow<Boolean>
+        get() = voiceInput.captureOnly
 
     fun toggleVoiceInput() {
         WriterEditStore.hideFlash()
