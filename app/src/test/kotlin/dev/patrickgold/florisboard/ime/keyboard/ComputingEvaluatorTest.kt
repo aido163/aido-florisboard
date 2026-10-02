@@ -41,6 +41,13 @@ class ComputingEvaluatorTest : FunSpec({
         spokenDictationText(null) shouldBe ""
     }
 
+    test("live dictation keeps finished phrases and the current hypothesis") {
+        dictationTranscript(emptyList(), "") shouldBe ""
+        dictationTranscript(emptyList(), "hello") shouldBe "hello"
+        dictationTranscript(listOf("hello maya"), "how are") shouldBe "hello maya how are"
+        dictationTranscript(listOf("hello maya"), "  ") shouldBe "hello maya"
+    }
+
     test("never binds this app's stub recognition service") {
         pickExternalRecognitionService(
             appPackage = "com.aido.type",

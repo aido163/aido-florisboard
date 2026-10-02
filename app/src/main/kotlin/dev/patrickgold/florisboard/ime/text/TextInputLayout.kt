@@ -16,15 +16,11 @@
 
 package dev.patrickgold.florisboard.ime.text
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardVoice
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,6 +41,7 @@ import dev.patrickgold.florisboard.ime.smartbar.WriterChildMenu
 import dev.patrickgold.florisboard.ime.smartbar.WriterEditStore
 import dev.patrickgold.florisboard.ime.smartbar.WriterLayer
 import dev.patrickgold.florisboard.ime.smartbar.WriterNavStore
+import dev.patrickgold.florisboard.ime.smartbar.VoiceDictationSheet
 import dev.patrickgold.florisboard.ime.smartbar.WriterSuggestionsPanel
 import dev.patrickgold.florisboard.ime.smartbar.WriterToolsPanel
 import dev.patrickgold.florisboard.ime.smartbar.quickaction.QuickActionsOverflowPanel
@@ -53,8 +50,6 @@ import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import dev.patrickgold.florisboard.keyboardManager
 import dev.patrickgold.jetpref.datastore.model.collectAsState
 import org.florisboard.lib.snygg.ui.SnyggIcon
-import org.florisboard.lib.snygg.ui.SnyggRow
-import org.florisboard.lib.snygg.ui.SnyggText
 
 @Composable
 fun TextInputLayout(
@@ -69,13 +64,16 @@ fun TextInputLayout(
     val evaluator by keyboardManager.activeEvaluator.collectAsState()
     val writerUi by WriterNavStore.ui.collectAsState()
     val toolsOpen by WriterEditStore.toolsOpen.collectAsState()
-    val voiceListening by keyboardManager.voiceListening.collectAsState()
+    val voicePresented by keyboardManager.voicePresented.collectAsState()
+    val voiceTranscript by keyboardManager.voiceTranscript.collectAsState()
+    val voiceNotice by keyboardManager.voiceNotice.collectAsState()
 
     InlineSuggestionsStyleCache()
 
     val showChildMenu = writerUi.layer == WriterLayer.VARIANTS &&
         !writerUi.catalogOpen &&
-        !toolsOpen
+        !toolsOpen &&
+        !voicePresented
 
     Column(
         modifier = modifier
@@ -87,10 +85,13 @@ fun TextInputLayout(
         if (showChildMenu) {
             WriterChildMenu(mode = writerUi.mode)
         }
-        if (voiceListening) {
-            VoiceListeningBar(onStop = { keyboardManager.stopVoiceInput() })
-        }
-        if (toolsOpen) {
+        if (voicePresented) {
+            VoiceDictationSheet(
+                transcript = voiceTranscript,
+                notice = voiceNotice,
+                onDone = { keyboardManager.finishVoiceInput() },
+            )
+        } else if (toolsOpen) {
             WriterToolsPanel()
         } else if (writerUi.catalogOpen) {
             WriterCatalogPanel()
@@ -130,27 +131,5 @@ fun TextInputLayout(
                 TextKeyboardLayout(evaluator = evaluator)
             }
         }
-    }
-}
-
-@Composable
-private fun VoiceListeningBar(onStop: () -> Unit) {
-    SnyggRow(
-        FlorisImeUi.Smartbar.elementName,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(36.dp),
-        clickAndSemanticsModifier = Modifier
-            .clickable(onClick = onStop)
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        SnyggIcon(
-            imageVector = Icons.Default.KeyboardVoice,
-        )
-        SnyggText(
-            modifier = Modifier.padding(start = 8.dp),
-            text = "listening · tap to stop",
-        )
     }
 }

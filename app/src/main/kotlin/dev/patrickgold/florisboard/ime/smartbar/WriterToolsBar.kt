@@ -157,7 +157,7 @@ internal fun WriterMicButton(
 ) {
     val context = LocalContext.current
     val keyboardManager by context.keyboardManager()
-    val listening by keyboardManager.voiceListening.collectAsState()
+    val listening by keyboardManager.voicePresented.collectAsState()
     val inputFeedbackController = LocalInputFeedbackController.current
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()

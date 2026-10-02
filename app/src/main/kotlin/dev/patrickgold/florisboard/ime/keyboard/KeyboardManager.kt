@@ -118,15 +118,35 @@ class KeyboardManager(context: Context) : InputKeyEventReceiver {
     }
     val voiceListening: StateFlow<Boolean>
         get() = voiceInput.listening
+    val voicePresented: StateFlow<Boolean>
+        get() = voiceInput.presented
+    val voiceTranscript: StateFlow<String>
+        get() = voiceInput.transcript
+    val voiceNotice: StateFlow<String>
+        get() = voiceInput.notice
 
     fun toggleVoiceInput() {
         WriterEditStore.hideFlash()
         voiceInput.toggle()
     }
 
+    /** Insert the live transcript and close the sheet. */
+    fun finishVoiceInput() {
+        voiceInput.finish()
+    }
+
+    /** Close the sheet without inserting. Used when the keyboard goes away. */
     fun stopVoiceInput() {
         voiceInput.stop()
     }
+
+    /** Suggest conversation-context mic — does not insert into the draft. */
+    fun startContextVoiceCapture() {
+        WriterEditStore.hideFlash()
+        voiceInput.startCapture()
+    }
+
+    fun takeContextVoiceTranscript(): String = voiceInput.takeTranscriptAndStop()
 
     val inputEventDispatcher = InputEventDispatcher.new(
         repeatableKeyCodes = intArrayOf(
