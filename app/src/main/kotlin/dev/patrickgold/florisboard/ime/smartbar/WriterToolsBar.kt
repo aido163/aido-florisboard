@@ -27,7 +27,6 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -36,15 +35,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.Undo
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.AutoFixHigh
 import androidx.compose.material.icons.filled.KeyboardVoice
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Spellcheck
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -67,6 +69,7 @@ import dev.patrickgold.florisboard.ime.text.key.KeyCode
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyData
 import dev.patrickgold.florisboard.ime.theme.FlorisImeUi
 import kotlinx.coroutines.delay
+import java.util.Locale
 import org.florisboard.lib.compose.stringRes
 import org.florisboard.lib.snygg.SnyggSelector
 import org.florisboard.lib.snygg.ui.SnyggBox
@@ -82,19 +85,15 @@ internal data class WriterBarAction(
 
 /** Stitch smartbar: 34dp ghost pills, 40dp back, compact selected variant. */
 internal const val WriterChipHeightDp = 34
-internal const val WriterSelectedChipHeightDp = 32
 internal const val WriterBackSizeDp = 40
-internal const val WriterLampSizeDp = 6
-/** Saved chips stay this wide before the row scrolls. Add options use a taller row. */
-internal const val WriterChipMinWidthDp = 72
+/** Add options use a taller row. */
 internal const val WriterCatalogRowHeightDp = 44
 
-/** Draft transforms. Nested children live in [WriterNav]. Grammar skips children and applies. RESULTS cover the IME. */
+/** Draft transforms. Rewrite and translate open a child menu. Grammar and suggest open the sheet under this row. */
 internal val WriterBarTools = listOf(
     WriterBarAction(TextKeyData.GRAMMAR, R.string.writer_tools__fix),
     WriterBarAction(TextKeyData.REWRITE, R.string.quick_action__rewrite),
     WriterBarAction(TextKeyData.TRANSLATE, R.string.quick_action__translate),
-    WriterBarAction(TextKeyData.HUMANIZE, R.string.quick_action__humanize),
 )
 
 internal val WriterBarPrimary = WriterBarAction(
@@ -135,7 +134,9 @@ internal fun WriterMicButton(
         elementName = FlorisImeUi.SmartbarActionKey.elementName,
         attributes = attributes,
         selector = selector,
-        modifier = modifier.size(width = WriterBackSizeDp.dp, height = WriterChipHeightDp.dp),
+        modifier = modifier
+            .size(width = WriterBackSizeDp.dp, height = WriterChipHeightDp.dp)
+            .clip(CircleShape),
         contentAlignment = Alignment.Center,
         clickAndSemanticsModifier = Modifier
             .indication(interactionSource, LocalIndication.current)
@@ -151,6 +152,9 @@ internal fun WriterMicButton(
                         up.consume()
                         interactionSource.tryEmit(PressInteraction.Release(press))
                         WriterEditStore.closeTools()
+                        if (WriterNavStore.ui.value.layer != WriterLayer.TOOLS) {
+                            WriterNavStore.set(WriterUi())
+                        }
                         keyboardManager.toggleVoiceInput()
                     } else {
                         interactionSource.tryEmit(PressInteraction.Cancel(press))
@@ -173,7 +177,13 @@ internal fun WriterMoreButton(
         modifier = modifier,
         imageVector = Icons.Default.MoreVert,
         contentDescription = "more",
-        onClick = { WriterEditStore.toggleTools() },
+        onClick = {
+            val ui = WriterNavStore.ui.value
+            if (ui.layer != WriterLayer.TOOLS || ui.catalogOpen) {
+                WriterNavStore.set(WriterUi())
+            }
+            WriterEditStore.toggleTools()
+        },
     )
 }
 
@@ -223,8 +233,8 @@ fun WriterToolsPanel() {
         SnyggColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             PanelRow {
                 PanelChip("left") { keyboardManager.handleArrow(KeyCode.ARROW_LEFT) }
@@ -256,7 +266,7 @@ private fun PanelRow(content: @Composable RowScope.() -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(WriterCatalogRowHeightDp.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
         content = content,
     )
@@ -323,7 +333,9 @@ private fun WriterIconSlot(
     SnyggBox(
         elementName = FlorisImeUi.SmartbarActionKey.elementName,
         selector = selector,
-        modifier = modifier.size(width = WriterBackSizeDp.dp, height = WriterChipHeightDp.dp),
+        modifier = modifier
+            .size(width = WriterBackSizeDp.dp, height = WriterChipHeightDp.dp)
+            .clip(CircleShape),
         contentAlignment = Alignment.Center,
         clickAndSemanticsModifier = Modifier
             .indication(interactionSource, LocalIndication.current)
@@ -362,13 +374,41 @@ private fun keyCodeForWriterMode(mode: String): Int = when (mode) {
     else -> KeyCode.UNSPECIFIED
 }
 
+internal fun writerChipTitle(raw: String): String {
+    val trimmed = raw.trim()
+    if (trimmed.isEmpty()) return trimmed
+    return trimmed.replaceFirstChar { char ->
+        if (char.isLowerCase()) char.titlecase(Locale.getDefault()) else char.toString()
+    }
+}
+
+internal fun writerModeIcon(mode: String): ImageVector = when (mode) {
+    "grammar" -> Icons.Filled.Spellcheck
+    "rewrite", "humanize" -> Icons.Filled.AutoFixHigh
+    "translate" -> Icons.Filled.Translate
+    "suggest" -> Icons.Filled.AutoAwesome
+    else -> Icons.Filled.AutoAwesome
+}
+
+private fun modeForWriterAction(action: WriterBarAction): String = when (action.data.code) {
+    KeyCode.GRAMMAR -> "grammar"
+    KeyCode.REWRITE -> "rewrite"
+    KeyCode.TRANSLATE -> "translate"
+    KeyCode.SUGGEST -> "suggest"
+    else -> ""
+}
+
+/** Space inside a pill, and between pills. Matches a roomy chip track. */
+internal val WriterChipPadH = 14.dp
+internal val WriterChipGap = 10.dp
+
 @Composable
 fun WriterToolsBar(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val writerUi by WriterNavStore.ui.collectAsState()
-    val variantScroll = rememberScrollState()
+    val chipScroll = rememberScrollState()
     fun fire(data: TextKeyData) {
         val app = context.applicationContext as? FlorisApplication ?: return
         WriterEditStore.hideFlash()
@@ -382,36 +422,12 @@ fun WriterToolsBar(
             KeyCode.DETECT_AI -> app.onHostDetectAiRequested()
         }
     }
-    fun fireBack() {
-        val app = context.applicationContext as? FlorisApplication ?: return
-        WriterEditStore.hideFlash()
-        if (WriterEditStore.toolsOpen.value) {
-            WriterEditStore.closeTools()
-            return
-        }
-        app.onHostWriterBackRequested()
-    }
-    fun fireVariant(variant: WriterVariant) {
-        val app = context.applicationContext as? FlorisApplication ?: return
-        WriterEditStore.hideFlash()
-        WriterEditStore.closeTools()
-        app.onHostWriterVariantRequested(variant.id, variant.label)
-    }
-    fun fireCatalog() {
-        val app = context.applicationContext as? FlorisApplication ?: return
-        WriterEditStore.hideFlash()
-        WriterEditStore.closeTools()
-        app.onHostWriterCatalogRequested()
-    }
-
     @Composable
-    fun RowScope.ToolChip(
+    fun ToolChip(
         label: String,
+        icon: ImageVector,
         code: Int,
         onClick: () -> Unit,
-        fill: Boolean = true,
-        lamp: Boolean = false,
-        minWidth: Boolean = false,
         selected: Boolean = false,
     ) {
         val inputFeedbackController = LocalInputFeedbackController.current
@@ -424,27 +440,15 @@ fun WriterToolsBar(
             selected -> SnyggSelector.FOCUS
             else -> null
         }
-        val chipModifier = when {
-            fill ->
-                Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .height(WriterChipHeightDp.dp)
-            minWidth ->
-                Modifier
-                    .widthIn(min = WriterChipMinWidthDp.dp)
-                    .height(WriterChipHeightDp.dp)
-            else ->
-                Modifier.height(
-                    if (lamp) WriterSelectedChipHeightDp.dp else WriterChipHeightDp.dp,
-                )
-        }
         SnyggRow(
             elementName = elementName,
             attributes = attributes,
             selector = selector,
-            modifier = chipModifier,
+            modifier = Modifier
+                .height(WriterChipHeightDp.dp)
+                .clip(CircleShape),
             clickAndSemanticsModifier = Modifier
+                .padding(horizontal = WriterChipPadH)
                 .indication(interactionSource, LocalIndication.current)
                 .pointerInput(code, label, selected) {
                     awaitEachGesture {
@@ -464,149 +468,174 @@ fun WriterToolsBar(
                     }
                 },
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = if (lamp) {
-                Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally)
-            } else {
-                Arrangement.Center
-            },
+            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
         ) {
-            if (lamp) {
-                SnyggBox(
-                    elementName = FlorisImeUi.WindowResizeHandle.elementName,
-                    modifier = Modifier
-                        .size(WriterLampSizeDp.dp)
-                        .clip(CircleShape),
-                ) { }
-            }
+            SnyggIcon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+            )
             SnyggText(
                 elementName = "$elementName-text",
                 attributes = attributes,
                 selector = selector,
-                text = label,
+                text = writerChipTitle(label),
             )
         }
     }
 
-    @Composable
-    fun WriterBackButton() {
-        val inputFeedbackController = LocalInputFeedbackController.current
-        val interactionSource = remember { MutableInteractionSource() }
-        val isPressed by interactionSource.collectIsPressedAsState()
-        val selector = if (isPressed) SnyggSelector.PRESSED else null
-        SnyggBox(
-            elementName = FlorisImeUi.SmartbarSharedActionsToggle.elementName,
-            selector = selector,
-            modifier = Modifier.size(WriterBackSizeDp.dp),
-            contentAlignment = Alignment.Center,
-            clickAndSemanticsModifier = Modifier
-                .indication(interactionSource, LocalIndication.current)
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        val down = awaitFirstDown()
-                        down.consume()
-                        val press = PressInteraction.Press(down.position)
-                        inputFeedbackController.keyPress(TextKeyData.UNSPECIFIED)
-                        interactionSource.tryEmit(press)
-                        val up = waitForUpOrCancellation()
-                        if (up != null) {
-                            up.consume()
-                            interactionSource.tryEmit(PressInteraction.Release(press))
-                            fireBack()
-                        } else {
-                            interactionSource.tryEmit(PressInteraction.Cancel(press))
-                        }
-                    }
-                },
-        ) {
-            SnyggIcon(imageVector = Icons.AutoMirrored.Default.KeyboardArrowLeft)
-        }
-    }
-
+    val menuOpen = writerUi.layer == WriterLayer.VARIANTS || writerUi.layer == WriterLayer.RESULTS
     SnyggRow(
         elementName = FlorisImeUi.SmartbarSharedActionsRow.elementName,
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp),
+            .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(WriterChipGap),
     ) {
-        when (writerUi.layer) {
-            WriterLayer.TOOLS -> {
-                (WriterBarTools + WriterBarPrimary).forEach { action ->
-                    ToolChip(
-                        label = stringRes(action.labelRes),
-                        code = action.data.code,
-                        onClick = { fire(action.data) },
-                    )
-                }
-                WriterMicButton()
-                WriterMoreButton()
-            }
-            WriterLayer.VARIANTS -> {
-                WriterBackButton()
-                val variants = WriterNav.variantsFor(writerUi.mode)
-                val canAdd = WriterNav.canAdd(writerUi.mode)
-                val code = keyCodeForWriterMode(writerUi.mode)
-                BoxWithConstraints(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                ) {
-                    val count = variants.size + if (canAdd) 1 else 0
-                    val gap = 6.dp
-                    val each = if (count > 0) {
-                        (maxWidth - gap * (count - 1).coerceAtLeast(0)) / count
-                    } else {
-                        maxWidth
-                    }
-                    val scroll = each < WriterChipMinWidthDp.dp
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .then(
-                                if (scroll) {
-                                    Modifier.horizontalScroll(variantScroll)
-                                } else {
-                                    Modifier
-                                },
-                            ),
-                        horizontalArrangement = Arrangement.spacedBy(gap),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        variants.forEach { variant ->
-                            ToolChip(
-                                label = variant.label,
-                                code = code,
-                                onClick = { fireVariant(variant) },
-                                fill = !scroll,
-                                minWidth = scroll,
-                            )
-                        }
-                        if (canAdd) {
-                            ToolChip(
-                                label = "add",
-                                code = code,
-                                onClick = { fireCatalog() },
-                                fill = !scroll,
-                                minWidth = scroll,
-                                selected = writerUi.catalogOpen,
-                            )
-                        }
-                    }
-                }
-                WriterMoreButton()
-            }
-            WriterLayer.RESULTS -> {
-                WriterBackButton()
+        Row(
+            modifier = Modifier
+                .weight(1f)
+                .horizontalScroll(chipScroll),
+            horizontalArrangement = Arrangement.spacedBy(WriterChipGap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            (WriterBarTools + WriterBarPrimary).forEach { action ->
+                val mode = modeForWriterAction(action)
                 ToolChip(
-                    label = writerUi.variant?.label.orEmpty(),
-                    code = keyCodeForWriterMode(writerUi.mode),
-                    onClick = { },
-                    fill = false,
-                    lamp = true,
+                    label = stringRes(action.labelRes),
+                    icon = writerModeIcon(mode),
+                    code = action.data.code,
+                    selected = menuOpen && writerUi.mode == mode,
+                    onClick = { fire(action.data) },
                 )
             }
         }
+        WriterMicButton()
+        WriterMoreButton()
+    }
+}
+
+/**
+ * Saved child chips in a horizontal track under the tool row.
+ * Add opens the catalog in the key area.
+ */
+@Composable
+fun WriterChildMenu(
+    mode: String,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val variants = WriterNav.variantsFor(mode)
+    val icon = writerModeIcon(mode)
+    val code = keyCodeForWriterMode(mode)
+    val scroll = rememberScrollState()
+
+    fun fireVariant(variant: WriterVariant) {
+        val app = context.applicationContext as? FlorisApplication ?: return
+        WriterEditStore.hideFlash()
+        WriterEditStore.closeTools()
+        app.onHostWriterVariantRequested(variant.id, variant.label)
+    }
+
+    fun fireCatalog() {
+        val app = context.applicationContext as? FlorisApplication ?: return
+        WriterEditStore.hideFlash()
+        WriterEditStore.closeTools()
+        app.onHostWriterCatalogRequested()
+    }
+
+    SnyggBox(
+        elementName = FlorisImeUi.SmartbarActionsOverflow.elementName,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 10.dp, vertical = 6.dp)
+            .height(48.dp)
+            .clip(CircleShape),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(scroll)
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(WriterChipGap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            variants.forEach { variant ->
+                WriterMenuChip(
+                    label = variant.label,
+                    icon = icon,
+                    code = code,
+                    onClick = { fireVariant(variant) },
+                )
+            }
+            if (WriterNav.canAdd(mode)) {
+                WriterMenuChip(
+                    label = "add",
+                    icon = Icons.Filled.Add,
+                    code = code,
+                    onClick = { fireCatalog() },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun WriterMenuChip(
+    label: String,
+    icon: ImageVector,
+    code: Int,
+    onClick: () -> Unit,
+) {
+    val inputFeedbackController = LocalInputFeedbackController.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val elementName = FlorisImeUi.SmartbarActionKey.elementName
+    val attributes = mapOf(FlorisImeUi.Attr.Code to code)
+    val selector = if (isPressed) SnyggSelector.PRESSED else null
+    SnyggRow(
+        elementName = elementName,
+        attributes = attributes,
+        selector = selector,
+        modifier = Modifier
+            .height(WriterChipHeightDp.dp)
+            .clip(CircleShape),
+        clickAndSemanticsModifier = Modifier
+            .padding(horizontal = WriterChipPadH)
+            .indication(interactionSource, LocalIndication.current)
+            .pointerInput(code, label) {
+                awaitEachGesture {
+                    val down = awaitFirstDown()
+                    down.consume()
+                    val press = PressInteraction.Press(down.position)
+                    inputFeedbackController.keyPress(TextKeyData.UNSPECIFIED)
+                    interactionSource.tryEmit(press)
+                    val up = waitForUpOrCancellation()
+                    if (up != null) {
+                        up.consume()
+                        interactionSource.tryEmit(PressInteraction.Release(press))
+                        onClick()
+                    } else {
+                        interactionSource.tryEmit(PressInteraction.Cancel(press))
+                    }
+                }
+            },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+    ) {
+        SnyggIcon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(14.dp),
+        )
+        SnyggText(
+            elementName = "$elementName-text",
+            attributes = attributes,
+            selector = selector,
+            text = writerChipTitle(label),
+        )
     }
 }
 
@@ -633,12 +662,14 @@ fun WriterCatalogPanel() {
             SnyggColumn(
                 modifier = Modifier
                     .weight(1f)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 options.forEach { option ->
                     WriterCatalogRow(
                         label = option.label,
+                        mode = writerUi.mode,
                         code = code,
                         onClick = { add(option) },
                     )
@@ -651,6 +682,7 @@ fun WriterCatalogPanel() {
 @Composable
 private fun WriterCatalogRow(
     label: String,
+    mode: String,
     code: Int,
     onClick: () -> Unit,
 ) {
@@ -666,7 +698,8 @@ private fun WriterCatalogRow(
         selector = selector,
         modifier = Modifier
             .fillMaxWidth()
-            .height(WriterCatalogRowHeightDp.dp),
+            .height(WriterCatalogRowHeightDp.dp)
+            .clip(CircleShape),
         clickAndSemanticsModifier = Modifier
             .indication(interactionSource, LocalIndication.current)
             .pointerInput(code, label) {
@@ -687,13 +720,18 @@ private fun WriterCatalogRow(
                 }
             },
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
     ) {
+        SnyggIcon(
+            imageVector = writerModeIcon(mode),
+            contentDescription = null,
+            modifier = Modifier.size(14.dp),
+        )
         SnyggText(
             elementName = "$elementName-text",
             attributes = attributes,
             selector = selector,
-            text = label,
+            text = writerChipTitle(label),
         )
     }
 }

@@ -22,8 +22,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 /**
- * Nested writer-tool navigation: tools → child chips → result list.
- * Suggest and grammar skip VARIANTS and open RESULTS thinking on the same stack.
+ * Writer-tool navigation. The smart bar stays on the tool row.
+ * Rewrite and translate open a dropdown (VARIANTS). Grammar and suggest
+ * skip that and open the result sheet (RESULTS) under the bar.
  */
 enum class WriterLayer {
     TOOLS,
@@ -50,10 +51,11 @@ data class WriterUi(
 ) {
     val nestedOpen: Boolean get() = layer != WriterLayer.TOOLS
 
-    /** RESULTS (Suggest and writer transforms) cover smartbar + keys in place. */
-    val coversIme: Boolean get() = layer == WriterLayer.RESULTS
+    /** The tool row stays visible. The sheet never covers the smart bar. */
+    val coversIme: Boolean get() = false
 
-    val coversKeys: Boolean get() = false
+    /** RESULTS replace the keys only, directly under the smart bar. */
+    val coversKeys: Boolean get() = layer == WriterLayer.RESULTS
 }
 
 object WriterNav {
@@ -99,6 +101,13 @@ object WriterNav {
         WriterVariant("sharper", "sharper"),
         WriterVariant("flirty", "flirty"),
         WriterVariant("dry", "dry"),
+        WriterVariant("natural", "natural"),
+        WriterVariant("shorter", "shorter"),
+        WriterVariant("warmer", "warmer"),
+        WriterVariant("looser", "looser"),
+        WriterVariant("spoken", "spoken"),
+        WriterVariant("punchier", "punchier"),
+        WriterVariant("messy", "messy"),
     )
 
     val HUMANIZE_CATALOG: List<WriterVariant> = listOf(
@@ -189,9 +198,12 @@ object WriterNav {
 
     fun skipsVariants(mode: String): Boolean = variantsFor(mode).isEmpty()
 
-    /** Grammar and translate replace the draft; rewrite / humanize keep a chip list. */
-    fun autoReplacesDraft(mode: String): Boolean =
-        mode == "grammar" || mode == "translate"
+    /**
+     * Every tool waits for a tap on the sheet. Nothing replaces the draft
+     * until that tap. [mode] is kept so callers stay explicit.
+     */
+    @Suppress("UNUSED_PARAMETER")
+    fun autoReplacesDraft(mode: String): Boolean = false
 
     fun openVariants(mode: String): WriterUi {
         if (skipsVariants(mode)) return WriterUi()
@@ -259,9 +271,7 @@ object WriterNav {
     fun back(current: WriterUi): WriterUi {
         if (current.catalogOpen) return current.copy(catalogOpen = false)
         return when (current.layer) {
-            WriterLayer.RESULTS ->
-                if (skipsVariants(current.mode)) WriterUi()
-                else WriterUi(layer = WriterLayer.VARIANTS, mode = current.mode)
+            WriterLayer.RESULTS -> WriterUi()
             WriterLayer.VARIANTS -> WriterUi()
             WriterLayer.TOOLS -> WriterUi()
         }

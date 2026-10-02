@@ -41,7 +41,9 @@ import dev.patrickgold.florisboard.ime.smartbar.IncognitoDisplayMode
 import dev.patrickgold.florisboard.ime.smartbar.InlineSuggestionsStyleCache
 import dev.patrickgold.florisboard.ime.smartbar.Smartbar
 import dev.patrickgold.florisboard.ime.smartbar.WriterCatalogPanel
+import dev.patrickgold.florisboard.ime.smartbar.WriterChildMenu
 import dev.patrickgold.florisboard.ime.smartbar.WriterEditStore
+import dev.patrickgold.florisboard.ime.smartbar.WriterLayer
 import dev.patrickgold.florisboard.ime.smartbar.WriterNavStore
 import dev.patrickgold.florisboard.ime.smartbar.WriterSuggestionsPanel
 import dev.patrickgold.florisboard.ime.smartbar.WriterToolsPanel
@@ -72,18 +74,36 @@ fun TextInputLayout(
 
     InlineSuggestionsStyleCache()
 
+    val showChildMenu = writerUi.layer == WriterLayer.VARIANTS &&
+        !writerUi.catalogOpen &&
+        !toolsOpen
+
     Column(
         modifier = modifier
             .fillMaxWidth()
             .wrapContentHeight(),
     ) {
-        if (writerUi.coversIme) {
+        // Tool row stays up. Output, the child menu, and the ⋯ panel sit under it.
+        WriterUndoStrip()
+        Smartbar()
+        if (showChildMenu) {
+            WriterChildMenu(mode = writerUi.mode)
+        }
+        if (voiceListening) {
+            VoiceListeningBar(onStop = { keyboardManager.stopVoiceInput() })
+        }
+        if (toolsOpen) {
+            WriterToolsPanel()
+        } else if (writerUi.catalogOpen) {
+            WriterCatalogPanel()
+        } else if (writerUi.coversKeys) {
             val app = context.applicationContext as? FlorisApplication
             val hostSheet = app?.hostSuggestSheet
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(FlorisImeSizing.imeUiHeight()),
+                    .height(FlorisImeSizing.keyboardUiHeight())
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
             ) {
                 if (app != null && hostSheet != null) {
                     hostSheet.Content(
@@ -91,40 +111,26 @@ fun TextInputLayout(
                         onDismiss = { app.onHostWriterBackRequested() },
                     )
                 } else {
-                    WriterSuggestionsPanel(writerUi, fillIme = true)
+                    WriterSuggestionsPanel(writerUi)
                 }
             }
+        } else if (state.isActionsOverflowVisible) {
+            QuickActionsOverflowPanel()
         } else {
-            // Extra row inside the measured window so the key rows keep their height.
-            WriterUndoStrip()
-            Smartbar()
-            if (voiceListening) {
-                VoiceListeningBar(onStop = { keyboardManager.stopVoiceInput() })
-            }
-            if (toolsOpen) {
-                WriterToolsPanel()
-            } else if (writerUi.catalogOpen) {
-                WriterCatalogPanel()
-            } else if (writerUi.coversKeys) {
-                WriterSuggestionsPanel(writerUi)
-            } else if (state.isActionsOverflowVisible) {
-                QuickActionsOverflowPanel()
-            } else {
-                Box {
-                    val incognitoDisplayMode by prefs.keyboard.incognitoDisplayMode.collectAsState()
-                    val showIncognitoIcon = evaluator.state.isIncognitoMode &&
-                        incognitoDisplayMode == IncognitoDisplayMode.DISPLAY_BEHIND_KEYBOARD
-                    if (showIncognitoIcon) {
-                        SnyggIcon(
-                            FlorisImeUi.IncognitoModeIndicator.elementName,
-                            modifier = Modifier
-                                .matchParentSize()
-                                .align(Alignment.Center),
-                            painter = painterResource(R.drawable.ic_incognito),
-                        )
-                    }
-                    TextKeyboardLayout(evaluator = evaluator)
+            Box {
+                val incognitoDisplayMode by prefs.keyboard.incognitoDisplayMode.collectAsState()
+                val showIncognitoIcon = evaluator.state.isIncognitoMode &&
+                    incognitoDisplayMode == IncognitoDisplayMode.DISPLAY_BEHIND_KEYBOARD
+                if (showIncognitoIcon) {
+                    SnyggIcon(
+                        FlorisImeUi.IncognitoModeIndicator.elementName,
+                        modifier = Modifier
+                            .matchParentSize()
+                            .align(Alignment.Center),
+                        painter = painterResource(R.drawable.ic_incognito),
+                    )
                 }
+                TextKeyboardLayout(evaluator = evaluator)
             }
         }
     }
