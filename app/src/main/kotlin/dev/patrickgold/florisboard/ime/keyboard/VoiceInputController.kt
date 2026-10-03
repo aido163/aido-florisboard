@@ -25,6 +25,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
+import android.util.Log
 import android.speech.RecognitionListener
 import android.speech.RecognitionService
 import android.speech.RecognizerIntent
@@ -41,6 +43,9 @@ class VoiceInputController(
     private val context: Context,
     private val commitText: (String) -> Unit,
 ) {
+    private companion object {
+        const val TAG = "AidoVoice"
+    }
     private val main = Handler(Looper.getMainLooper())
     private var recognizer: SpeechRecognizer? = null
     private val listeningState = MutableStateFlow(false)
@@ -296,8 +301,17 @@ class VoiceInputController(
     }
 
     private fun createRecognizer(): SpeechRecognizer? {
-        val external = pickExternalRecognitionService(context.packageName, installedRecognitionServices())
+        val preferred = Settings.Secure.getString(
+            context.contentResolver,
+            Settings.Secure.VOICE_RECOGNITION_SERVICE,
+        )
+        val external = pickExternalRecognitionService(
+            context.packageName,
+            installedRecognitionServices(),
+            preferred,
+        )
         if (external != null) {
+            Log.i(TAG, "recognition service ${external.packageName}/${external.className}")
             try {
                 return SpeechRecognizer.createSpeechRecognizer(
                     context,

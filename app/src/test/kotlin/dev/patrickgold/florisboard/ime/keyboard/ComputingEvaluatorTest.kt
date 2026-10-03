@@ -88,4 +88,31 @@ class ComputingEvaluatorTest : FunSpec({
             ),
         ) shouldBe null
     }
+
+    test("uses the system voice recognizer instead of android system intelligence") {
+        val tts = RecognitionServiceTarget(
+            "com.google.android.tts",
+            "com.google.android.apps.speech.tts.googletts.service.GoogleTTSRecognitionService",
+        )
+        val services = listOf(
+            RecognitionServiceTarget(
+                "com.google.android.as",
+                "com.google.android.apps.miphone.aiai.app.AiAiSpeechRecognitionService",
+            ),
+            tts,
+            RecognitionServiceTarget(
+                "com.samsung.android.bixby.agent",
+                "com.samsung.android.bixby.agent.app.mainui.voiceinteraction.RecognitionServiceTrampoline",
+            ),
+        )
+        pickExternalRecognitionService(
+            appPackage = "com.aido.type",
+            services = services,
+            preferredComponent = "com.google.android.tts/${tts.className}",
+        ) shouldBe tts
+        pickExternalRecognitionService(
+            appPackage = "com.aido.type",
+            services = services,
+        ) shouldBe tts
+    }
 })

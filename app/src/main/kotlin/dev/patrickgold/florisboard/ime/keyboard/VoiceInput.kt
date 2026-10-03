@@ -44,13 +44,60 @@ data class RecognitionServiceTarget(
     val className: String,
 )
 
-/** Never bind AIDO's stub [android.speech.RecognitionService]. */
+/**
+ * Never bind AIDO's stub [android.speech.RecognitionService].
+ *
+ * [preferredComponent] is `Settings.Secure.VOICE_RECOGNITION_SERVICE`
+ * (`package/class`). Query order is not the user's recognizer: on Samsung
+ * the first hit is Android System Intelligence, which opens the mic and
+ * then drops the audio without a transcript.
+ */
 fun pickExternalRecognitionService(
     appPackage: String,
     services: List<RecognitionServiceTarget>,
+    preferredComponent: String? = null,
 ): RecognitionServiceTarget? {
-    return services.firstOrNull { target ->
+    val candidates = services.filter { target ->
         target.packageName != appPackage &&
             !target.className.contains("AidoRecognitionService")
     }
+    if (candidates.isEmpty()) return null
+    val preferred = preferredComponent
+        ?.let { component ->
+            val slash = component.indexOf('/')
+            if (slash <= 0 || slash == component.lastIndex) {
+                null
+            } else {
+                RecognitionServiceTarget(
+                    component.substring(0, slash),
+                    component.substring(slash + 1),
+                )
+            }
+        }
+        ?.let { wanted ->
+            candidates.firstOrNull { target ->
+                target.packageName == wanted.packageName &&
+                    target.className == wanted.className
+            }
+        }
+    if (preferred != null) return preferred
+    return candidates.firstOrNull { it.packageName in DictationRecognitionPackages }
+        ?: candidates.firstOrNull { it.packageName !in NonDictationRecognitionPackages }
+        ?: candidates.first()
 }
+
+/** Services that actually return dictation to a third-party IME. */
+private val DictationRecognitionPackages = listOf(
+    "com.google.android.googlequicksearchbox",
+    "com.google.android.tts",
+)
+
+/**
+ * These advertise [android.speech.RecognitionService] but do not deliver
+ * speech text to this keyboard. System Intelligence records for a few
+ * seconds and then stops. Bixby only forwards a Bixby session.
+ */
+private val NonDictationRecognitionPackages = setOf(
+    "com.google.android.as",
+    "com.samsung.android.bixby.agent",
+)
