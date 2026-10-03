@@ -303,7 +303,7 @@ class VoiceInputController(
     private fun createRecognizer(): SpeechRecognizer? {
         val preferred = Settings.Secure.getString(
             context.contentResolver,
-            Settings.Secure.VOICE_RECOGNITION_SERVICE,
+            "voice_recognition_service",
         )
         val external = pickExternalRecognitionService(
             context.packageName,
