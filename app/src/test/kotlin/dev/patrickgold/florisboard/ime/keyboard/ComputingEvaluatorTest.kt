@@ -22,6 +22,7 @@ import dev.patrickgold.florisboard.ime.text.key.KeyCode
 import dev.patrickgold.florisboard.ime.text.key.KeyType
 import dev.patrickgold.florisboard.ime.text.keyboard.TextKeyData
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 
 class ComputingEvaluatorTest : FunSpec({
@@ -87,6 +88,20 @@ class ComputingEvaluatorTest : FunSpec({
                 ),
             ),
         ) shouldBe null
+    }
+
+    test("a dictation crash does not leave the chime streams at zero") {
+        stuckEarconVolume(current = 0, remembered = 8) shouldBe 8
+        stuckEarconVolume(current = 5, remembered = 8) shouldBe null
+        stuckEarconVolume(current = 0, remembered = -1) shouldBe null
+    }
+
+    test("dictation stays in one session so google does not chime on every phrase") {
+        val window = dictationListenWindow()
+        window.dictationMode shouldBe true
+        window.preferOffline shouldBe false
+        window.minimumLengthMillis shouldBeGreaterThan 10_000L
+        window.completeSilenceMillis shouldBeGreaterThan window.possibleSilenceMillis
     }
 
     test("uses the system voice recognizer instead of android system intelligence") {

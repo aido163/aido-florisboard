@@ -21,6 +21,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -45,6 +46,8 @@ class VoiceInputController(
 ) {
     private companion object {
         const val TAG = "AidoVoice"
+        const val EARCON_PREFS = "aido_voice_earcon"
+        const val EARCON_HOLD_MS = 800L
     }
     private val main = Handler(Looper.getMainLooper())
     private var recognizer: SpeechRecognizer? = null
@@ -64,6 +67,8 @@ class VoiceInputController(
     private var restarts = 0
     private var session = 0
     private var listenGeneration = 0
+    private val savedEarconVolumes = mutableMapOf<Int, Int>()
+    private var earconRestore: Runnable? = null
 
     fun toggle() {
         if (Looper.myLooper() != Looper.getMainLooper()) {
@@ -139,6 +144,8 @@ class VoiceInputController(
         listeningState.value = false
         restarts = 0
         captureOnlyState.value = false
+        // Cover the ending chime, then put the volume back. Do not leave streams at 0.
+        swallowEarcon()
         try {
             recognizer?.cancel()
         } catch (_: Throwable) {
@@ -171,25 +178,31 @@ class VoiceInputController(
         // Context capture keeps the Suggest sheet up. Flipping presented here
         // unmounted that sheet, stopped the mic in onDispose, and blinked.
         presentedState.value = showSheet
-        beginListening(token)
+        beginListening(token, recreate = true)
     }
 
     private fun sessionArmed(): Boolean =
         voiceRecognizerArmed(presentedState.value, captureOnlyState.value)
 
-    private fun beginListening(token: Int) {
+    private fun beginListening(token: Int, recreate: Boolean) {
         if (token != session || !sessionArmed()) return
         listenGeneration += 1
         val generation = listenGeneration
-        destroyRecognizer()
-        val speech = createRecognizer() ?: run {
-            listeningState.value = false
-            noticeState.value = "voice input is not available on this phone"
-            return
+        // A new SpeechRecognizer plays Google's mic chime and drops the first
+        // words of the next phrase. Reuse the open one between phrases.
+        if (recreate || recognizer == null) {
+            destroyRecognizer()
+            val speech = createRecognizer() ?: run {
+                listeningState.value = false
+                noticeState.value = "voice input is not available on this phone"
+                return
+            }
+            recognizer = speech
         }
-        recognizer = speech
+        val speech = recognizer ?: return
         listeningState.value = true
         speech.setRecognitionListener(listener(token, generation))
+        swallowEarcon()
         try {
             speech.startListening(listenIntent())
         } catch (_: Throwable) {
@@ -208,7 +221,10 @@ class VoiceInputController(
         override fun onBeginningOfSpeech() = Unit
         override fun onRmsChanged(rmsdB: Float) = Unit
         override fun onBufferReceived(buffer: ByteArray?) = Unit
-        override fun onEndOfSpeech() = Unit
+        override fun onEndOfSpeech() {
+            if (!live()) return
+            swallowEarcon()
+        }
         override fun onError(error: Int) {
             if (!live()) return
             when (error) {
@@ -218,10 +234,17 @@ class VoiceInputController(
                     noticeState.value = "mic permission needed. grant it in aido."
                 }
                 SpeechRecognizer.ERROR_NO_MATCH,
-                SpeechRecognizer.ERROR_SPEECH_TIMEOUT,
+                SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> {
+                    restarts += 1
+                    scheduleContinue(token, recreate = false)
+                }
+                SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> {
+                    restarts += 1
+                    scheduleContinue(token, recreate = false)
+                }
                 SpeechRecognizer.ERROR_CLIENT -> {
                     restarts += 1
-                    scheduleContinue(token)
+                    scheduleContinue(token, recreate = true)
                 }
                 else -> {
                     listeningState.value = false
@@ -245,7 +268,7 @@ class VoiceInputController(
             } else {
                 restarts += 1
             }
-            scheduleContinue(token)
+            scheduleContinue(token, recreate = false)
         }
         override fun onPartialResults(partialResults: Bundle?) {
             if (!live()) return
@@ -266,7 +289,7 @@ class VoiceInputController(
         }
     }
 
-    private fun scheduleContinue(token: Int) {
+    private fun scheduleContinue(token: Int, recreate: Boolean) {
         if (!sessionArmed() || token != session) return
         if (restarts >= 6) {
             listeningState.value = false
@@ -278,18 +301,82 @@ class VoiceInputController(
         }
         main.postDelayed({
             if (token == session && sessionArmed()) {
-                beginListening(token)
+                beginListening(token, recreate)
             }
         }, 200)
     }
 
     private fun listenIntent(): Intent {
+        val window = dictationListenWindow()
+        val locales = context.resources.configuration.locales
+        val language = if (locales.isEmpty) null else locales[0].toLanguageTag()
         return Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
             putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
             putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
             putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, context.packageName)
+            if (!language.isNullOrBlank()) {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, language)
+            }
+            // Speech Services plays its mic chime unless dictation mode is set.
+            putExtra("android.speech.extra.DICTATION_MODE", window.dictationMode)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, window.minimumLengthMillis)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, window.completeSilenceMillis)
+            putExtra(
+                RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS,
+                window.possibleSilenceMillis,
+            )
+            putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, window.preferOffline)
         }
+    }
+
+    /**
+     * Speech Services chimes when a listen starts and when a phrase ends.
+     * Duck only for that blip. Holding the duck for the whole session zeros
+     * the streams onboarding voice plays on.
+     */
+    private fun swallowEarcon() {
+        val audio = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return
+        val prefs = context.getSharedPreferences(EARCON_PREFS, Context.MODE_PRIVATE)
+        for (stream in earconStreamIds()) {
+            if (savedEarconVolumes.containsKey(stream)) continue
+            try {
+                val current = audio.getStreamVolume(stream)
+                if (current <= 0) continue
+                savedEarconVolumes[stream] = current
+                prefs.edit().putInt("s$stream", current).apply()
+                audio.setStreamVolume(stream, 0, 0)
+            } catch (_: Throwable) {
+            }
+        }
+        scheduleEarconRestore(EARCON_HOLD_MS)
+    }
+
+    private fun scheduleEarconRestore(delayMs: Long) {
+        earconRestore?.let { main.removeCallbacks(it) }
+        val restore = Runnable { restoreEarcon() }
+        earconRestore = restore
+        main.postDelayed(restore, delayMs)
+    }
+
+    private fun restoreEarcon() {
+        earconRestore?.let { main.removeCallbacks(it) }
+        earconRestore = null
+        if (savedEarconVolumes.isEmpty()) return
+        val audio = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+        if (audio != null) {
+            for ((stream, volume) in savedEarconVolumes) {
+                try {
+                    audio.setStreamVolume(stream, volume, 0)
+                } catch (_: Throwable) {
+                }
+            }
+        }
+        savedEarconVolumes.clear()
+        context.getSharedPreferences(EARCON_PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .clear()
+            .apply()
     }
 
     private fun destroyRecognizer() {
@@ -340,4 +427,44 @@ class VoiceInputController(
             RecognitionServiceTarget(info.packageName, info.name)
         }
     }
+}
+
+/** If a dictation session died while the chime was ducked, put those streams back. */
+fun recoverKeyboardEarconVolumes(context: Context) {
+    val audio = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager ?: return
+    val prefs = context.getSharedPreferences("aido_voice_earcon", Context.MODE_PRIVATE)
+    val editor = prefs.edit()
+    var changed = false
+    for (stream in earconStreamIds()) {
+        val restore = stuckEarconVolume(
+            current = try {
+                audio.getStreamVolume(stream)
+            } catch (_: Throwable) {
+                continue
+            },
+            remembered = prefs.getInt("s$stream", -1),
+        ) ?: continue
+        try {
+            audio.setStreamVolume(stream, restore, 0)
+        } catch (_: Throwable) {
+            continue
+        }
+        editor.remove("s$stream")
+        changed = true
+    }
+    // Older builds set these to 0 and exited before restoring them, so onboarding
+    // playback stayed silent. Raise each one once if it is still sitting at 0.
+    if (!prefs.getBoolean("recovered_zero", false)) {
+        for (stream in intArrayOf(3, 1, 5, 11)) {
+            try {
+                if (audio.getStreamVolume(stream) != 0) continue
+                val half = (audio.getStreamMaxVolume(stream) / 2).coerceAtLeast(1)
+                audio.setStreamVolume(stream, half, 0)
+            } catch (_: Throwable) {
+            }
+        }
+        editor.putBoolean("recovered_zero", true)
+        changed = true
+    }
+    if (changed) editor.apply()
 }

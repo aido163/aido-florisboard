@@ -31,6 +31,43 @@ fun voiceDictationSheetVisible(presented: Boolean, captureOnly: Boolean): Boolea
 fun voiceRecognizerArmed(presented: Boolean, captureOnly: Boolean): Boolean =
     presented || captureOnly
 
+/**
+ * One dictation session should stay open while the user talks.
+ * Google's speech service plays its mic chime on every [android.speech.SpeechRecognizer.startListening],
+ * and rebuilding the recognizer after each phrase drops the start of the next one.
+ */
+data class DictationListenWindow(
+    val dictationMode: Boolean,
+    val minimumLengthMillis: Long,
+    val completeSilenceMillis: Long,
+    val possibleSilenceMillis: Long,
+    val preferOffline: Boolean,
+)
+
+/** Streams Google uses for the mic chime. Not the voice-call stream onboarding speaks on. */
+fun earconStreamIds(): IntArray = intArrayOf(
+    3, // AudioManager.STREAM_MUSIC
+    1, // AudioManager.STREAM_SYSTEM
+    5, // AudioManager.STREAM_NOTIFICATION
+)
+
+/**
+ * A dictation session may have set a stream to 0 and then died before restoring it.
+ * Only put back a volume we remembered. A stream the user muted on purpose stays muted.
+ */
+fun stuckEarconVolume(current: Int, remembered: Int): Int? {
+    if (current > 0 || remembered <= 0) return null
+    return remembered
+}
+
+fun dictationListenWindow(): DictationListenWindow = DictationListenWindow(
+    dictationMode = true,
+    minimumLengthMillis = 30_000L,
+    completeSilenceMillis = 2_500L,
+    possibleSilenceMillis = 1_800L,
+    preferOffline = false,
+)
+
 /** Finished phrases plus the live hypothesis, as one readable line. */
 fun dictationTranscript(segments: List<String>, partial: String): String {
     return (segments + partial)
