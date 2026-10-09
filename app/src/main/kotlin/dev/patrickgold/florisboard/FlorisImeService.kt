@@ -384,6 +384,7 @@ class FlorisImeService : LifecycleInputMethodService() {
         (application as? FlorisApplication)?.onImeStartInputView(
             packageName = info?.packageName,
             fieldId = info?.fieldId ?: 0,
+            restarting = restarting,
         )
         flogInfo { "restarting=$restarting info=${info?.debugSummarize()}" }
         super.onStartInputView(info, restarting)

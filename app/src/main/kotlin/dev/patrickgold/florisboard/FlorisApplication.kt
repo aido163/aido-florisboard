@@ -96,7 +96,11 @@ open class FlorisApplication : Application() {
      * [packageName] / [fieldId] identify the focused editor so the host can
      * drop a draft-language lock when the user switches fields.
      */
-    open fun onImeStartInputView(packageName: String? = null, fieldId: Int = 0) {}
+    open fun onImeStartInputView(
+        packageName: String? = null,
+        fieldId: Int = 0,
+        restarting: Boolean = true,
+    ) {}
 
     /**
      * Called from [FlorisImeService.onFinishInputView] so the host can drop
