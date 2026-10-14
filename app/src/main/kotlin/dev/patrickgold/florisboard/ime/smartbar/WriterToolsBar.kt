@@ -71,6 +71,7 @@ import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -139,6 +140,10 @@ internal val WriterBarTrailing = WriterBarAction(
     TextKeyData.VOICE_INPUT,
     R.string.quick_action__voice_input,
 )
+
+/** Suggest stays. Grammar, rewrite, and translate need text in the field. */
+internal fun writerLeadingActions(hasDraft: Boolean): List<WriterBarAction> =
+    if (hasDraft) listOf(WriterBarPrimary) + WriterBarTools else listOf(WriterBarPrimary)
 
 internal fun showWriterToolsRow(
     layout: SmartbarLayout,
@@ -502,9 +507,21 @@ fun WriterToolsBar(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
+    val editorInstance by context.editorInstance()
+    val content by editorInstance.activeContentFlow.collectAsState()
+    val hasDraft = content.text.isNotBlank()
     val writerUi by WriterNavStore.ui.collectAsState()
     val edit by WriterEditStore.ui.collectAsState()
     val chipScroll = rememberScrollState()
+    LaunchedEffect(hasDraft) {
+        if (hasDraft) return@LaunchedEffect
+        val mode = WriterNavStore.ui.value.mode
+        if (mode == "grammar" || mode == "rewrite" || mode == "translate" ||
+            mode == "humanize" || mode == "detect"
+        ) {
+            WriterNavStore.set(WriterUi())
+        }
+    }
     fun fire(data: TextKeyData) {
         val app = context.applicationContext as? FlorisApplication ?: return
         WriterEditStore.hideFlash()
@@ -581,7 +598,7 @@ fun WriterToolsBar(
     }
 
     val menuOpen = writerUi.layer == WriterLayer.VARIANTS || writerUi.layer == WriterLayer.RESULTS
-    val leading = listOf(WriterBarPrimary) + WriterBarTools
+    val leading = writerLeadingActions(hasDraft)
     SnyggBox(
         elementName = FlorisImeUi.SmartbarSharedActionsRow.elementName,
         modifier = modifier.fillMaxWidth(),
