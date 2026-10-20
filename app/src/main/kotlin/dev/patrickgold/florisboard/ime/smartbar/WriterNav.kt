@@ -199,11 +199,11 @@ object WriterNav {
     fun skipsVariants(mode: String): Boolean = variantsFor(mode).isEmpty()
 
     /**
-     * Every tool waits for a tap on the sheet. Nothing replaces the draft
-     * until that tap. [mode] is kept so callers stay explicit.
+     * Grammar and translate replace the compose box with the first line.
+     * Rewrite / humanize / suggest keep a result sheet until the user taps.
      */
-    @Suppress("UNUSED_PARAMETER")
-    fun autoReplacesDraft(mode: String): Boolean = false
+    fun autoReplacesDraft(mode: String): Boolean =
+        mode == "grammar" || mode == "translate"
 
     fun openVariants(mode: String): WriterUi {
         if (skipsVariants(mode)) return WriterUi()
