@@ -17,4 +17,13 @@ class WriterLeadingActionsTest : FunSpec({
             KeyCode.TRANSLATE,
         )
     }
+
+    test("suggest is hidden when accessibility is off") {
+        writerLeadingActions(hasDraft = false, suggestVisible = false).map { it.data.code } shouldBe emptyList()
+        writerLeadingActions(hasDraft = true, suggestVisible = false).map { it.data.code } shouldBe listOf(
+            KeyCode.GRAMMAR,
+            KeyCode.REWRITE,
+            KeyCode.TRANSLATE,
+        )
+    }
 })

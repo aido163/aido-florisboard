@@ -141,9 +141,14 @@ internal val WriterBarTrailing = WriterBarAction(
     R.string.quick_action__voice_input,
 )
 
-/** Suggest stays. Grammar, rewrite, and translate need text in the field. */
-internal fun writerLeadingActions(hasDraft: Boolean): List<WriterBarAction> =
-    if (hasDraft) listOf(WriterBarPrimary) + WriterBarTools else listOf(WriterBarPrimary)
+/** Suggest stays while accessibility is on. Grammar, rewrite, and translate need text in the field. */
+internal fun writerLeadingActions(
+    hasDraft: Boolean,
+    suggestVisible: Boolean = true,
+): List<WriterBarAction> {
+    val tools = if (hasDraft) WriterBarTools else emptyList()
+    return if (suggestVisible) listOf(WriterBarPrimary) + tools else tools
+}
 
 internal fun showWriterToolsRow(
     layout: SmartbarLayout,
@@ -598,7 +603,13 @@ fun WriterToolsBar(
     }
 
     val menuOpen = writerUi.layer == WriterLayer.VARIANTS || writerUi.layer == WriterLayer.RESULTS
-    val leading = writerLeadingActions(hasDraft)
+    val app = context.applicationContext as? FlorisApplication
+    val fallbackEpoch = remember { kotlinx.coroutines.flow.MutableStateFlow(0) }
+    val inputEpoch by (app?.inputViewEpochFlow ?: fallbackEpoch).collectAsState()
+    val suggestVisible = remember(inputEpoch, app) {
+        app?.hostSuggestActionVisible() ?: true
+    }
+    val leading = writerLeadingActions(hasDraft, suggestVisible)
     SnyggBox(
         elementName = FlorisImeUi.SmartbarSharedActionsRow.elementName,
         modifier = modifier.fillMaxWidth(),

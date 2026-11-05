@@ -47,6 +47,7 @@ import dev.patrickgold.jetpref.datastore.runtime.initAndroid
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.florisboard.lib.kotlin.io.deleteContentsRecursively
 import org.florisboard.lib.kotlin.tryOrNull
@@ -118,6 +119,21 @@ open class FlorisApplication : Application() {
      * Host override for keypress sounds. Null = use JetPref only.
      */
     open fun hostAudioFeedbackEnabled(): Boolean? = null
+
+    /**
+     * Smartbar Suggest chip. Host returns false while accessibility is off
+     * so the button is not shown. Default keeps it visible.
+     */
+    open fun hostSuggestActionVisible(): Boolean = true
+
+    private val inputViewEpoch = MutableStateFlow(0)
+
+    /** Bumped from each input view so the smartbar re-reads host visibility. */
+    val inputViewEpochFlow: StateFlow<Int> = inputViewEpoch
+
+    fun noteInputViewStarted() {
+        inputViewEpoch.value = inputViewEpoch.value + 1
+    }
 
     /**
      * Host hook for the smartbar Suggest action. Must not hide the IME —
@@ -217,7 +233,14 @@ open class FlorisApplication : Application() {
             )
             CrashUtility.install(this)
             FlorisEmojiCompat.init(this)
-            flogError { "dummy result: ${dummyAdd(3,4)}" }
+            // Debug probe only. loadLibrary("fl_native") is arm64-only in debug;
+            // x86 emulators swallow the load failure then UnsatisfiedLinkError here
+            // (Error, not Exception) and crash-loop the IME notification.
+            try {
+                flogError { "dummy result: ${dummyAdd(3, 4)}" }
+            } catch (t: Throwable) {
+                flogError { "dummyAdd skipped: ${t.message}" }
+            }
 
             if (!UserManagerCompat.isUserUnlocked(this)) {
                 cacheDir?.deleteContentsRecursively()
