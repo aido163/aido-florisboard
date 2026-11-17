@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -102,7 +101,7 @@ fun CandidatesRow(modifier: Modifier = Modifier) {
                         weight(1f)
                     }
                     .conditional(displayMode != CandidatesDisplayMode.CLASSIC) {
-                        wrapContentWidth().widthIn(max = 280.dp)
+                        wrapContentWidth()
                     }
             }
             val list = when (displayMode) {

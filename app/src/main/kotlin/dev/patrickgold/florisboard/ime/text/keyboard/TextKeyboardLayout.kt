@@ -326,6 +326,7 @@ private fun TextKeyButton(
         modifier = Modifier
             .requiredSize(size)
             .absoluteOffset { key.visibleBounds.topLeft.toIntOffset() },
+        allowClip = false,
     ) {
         val isTelPadKey = key.computedData.type == KeyType.NUMERIC && evaluator.keyboard.mode == KeyboardMode.PHONE
         val iconOnly = key.foregroundImageVector != null
@@ -341,7 +342,7 @@ private fun TextKeyButton(
             }
             SnyggText(
                 modifier = Modifier
-                    .wrapContentSize()
+                    .wrapContentSize(unbounded = true)
                     .align(if (isTelPadKey) BiasAlignment(-0.5f, 0f) else Alignment.Center),
                 text = customLabel,
             )
@@ -352,7 +353,7 @@ private fun TextKeyButton(
                 attributes = attributes,
                 selector = selector,
                 modifier = Modifier
-                    .wrapContentSize()
+                    .wrapContentSize(unbounded = true)
                     .align(if (isTelPadKey) BiasAlignment(0.5f, 0f) else Alignment.TopEnd),
                 text = hintedLabel,
             )

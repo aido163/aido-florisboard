@@ -22,8 +22,8 @@ enum class SpaceBarMode {
     SPACE_BAR_KEY;
 }
 
-/** Spacebar shows the product name instead of the subtype language. */
-internal const val SpaceBarBrandLabel = "AIDO"
+/** Spacebar shows the same word as the keyboard preview. */
+internal const val SpaceBarBrandLabel = "space"
 
 internal fun spaceBarDisplayLabel(mode: SpaceBarMode): String? = when (mode) {
     SpaceBarMode.NOTHING -> null

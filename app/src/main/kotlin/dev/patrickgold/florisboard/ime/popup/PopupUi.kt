@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material3.Text
@@ -162,10 +163,13 @@ fun PopupExtBox(
                         attributes = localAttrs,
                         selector = selector,
                         modifier = Modifier.size(elemWidth, elemHeight),
+                        allowClip = false,
                     ) {
                         element.label?.let { label ->
                             SnyggText(
-                                modifier = Modifier.align(Alignment.Center),
+                                modifier = Modifier
+                                    .wrapContentSize(unbounded = true)
+                                    .align(Alignment.Center),
                                 text = label,
                             )
                         }

@@ -23,7 +23,9 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.absoluteOffset
@@ -332,13 +334,22 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
         hasSuggestionStrip = showingSuggestionStrip,
     )
 
-    if (showWriterBar) {
-        WriterToolsBar(
-            modifier = modifier
-                .fillMaxWidth()
-                .padding(vertical = 6.dp)
-                .height(FlorisImeSizing.smartbarHeight),
-        )
+    if (showWriterBar || showingSuggestionStrip && smartbarLayout == SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED) {
+        Column(
+            modifier = modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            if (showingSuggestionStrip) {
+                WordSuggestionBar()
+            }
+            if (showWriterBar) {
+                WriterToolsBar(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(WriterChipBarHeightDp.dp),
+                )
+            }
+        }
         return
     }
 
@@ -413,6 +424,39 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
                     ExtendedActionsToggle()
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun WordSuggestionBar() {
+    val context = LocalContext.current
+    val nlpManager by context.nlpManager()
+    val candidates by nlpManager.activeCandidatesFlow.collectAsState()
+    val pinned = candidates.any {
+        nlpManager.isPinnedPending(it) || nlpManager.isPinnedGrammar(it)
+    }
+    SnyggRow(
+        elementName = FlorisImeUi.SmartbarCandidatesRow.elementName,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(WriterSuggestionRowHeightDp.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (pinned) {
+            SuggestionBackButton(
+                onClick = {
+                    WriterEditStore.hideFlash()
+                    nlpManager.clearPinnedSuggestions()
+                },
+            )
+        }
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight(),
+        ) {
+            CandidatesRow()
         }
     }
 }

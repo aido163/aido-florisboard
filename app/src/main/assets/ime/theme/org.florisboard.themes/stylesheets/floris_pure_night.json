@@ -310,11 +310,11 @@
     "background": "transparent",
     "foreground": "var(--on-background)",
     "font-size": "14sp",
-    "margin": "4dp",
-    "padding": "8dp 0dp",
+    "margin": "4dp 2dp",
+    "padding": "10dp 2dp",
     "shape": "rectangle()",
     "text-max-lines": "1",
-    "text-overflow": "ellipsis"
+    "text-overflow": "visible"
   },
   "smartbar-candidate-word:pressed": {
     "background": "var(--surface)",

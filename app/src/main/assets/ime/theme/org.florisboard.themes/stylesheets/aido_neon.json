@@ -65,11 +65,23 @@
   "key": {
     "background": "var(--surface)",
     "foreground": "var(--on-surface)",
-    "font-size": "22sp",
+    "font-size": "20sp",
     "font-weight": "normal",
     "shape": "rounded-corner(4dp, 4dp, 4dp, 4dp)",
-    "margin": "3dp",
-    "text-max-lines": "1"
+    "margin": "2dp",
+    "clip": "no",
+    "text-max-lines": "1",
+    "text-overflow": "visible"
+  },
+  "key[mode=`SYMBOLS`]": {
+    "font-size": "18sp",
+    "clip": "no",
+    "text-overflow": "visible"
+  },
+  "key[mode=`SYMBOLS2`]": {
+    "font-size": "18sp",
+    "clip": "no",
+    "text-overflow": "visible"
   },
   "key:pressed": {
     "background": "var(--primary)",
@@ -360,13 +372,13 @@
     "foreground": "var(--on-background)",
     "border-color": "var(--on-surface-variant)",
     "border-width": "1dp",
-    "font-size": "13sp",
+    "font-size": "14sp",
     "font-weight": "bold",
-    "margin": "4dp",
-    "padding": "8dp 14dp",
+    "margin": "4dp 2dp",
+    "padding": "12dp 4dp",
     "shape": "var(--shape-chip)",
     "text-max-lines": "1",
-    "text-overflow": "ellipsis"
+    "text-overflow": "visible"
   },
   "smartbar-candidate-word[rank=0]": {
     "background": "#FDE8EB",

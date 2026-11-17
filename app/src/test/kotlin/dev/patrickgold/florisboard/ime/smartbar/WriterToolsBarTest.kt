@@ -26,17 +26,22 @@ class WriterToolsBarTest : FunSpec({
             KeyCode.GRAMMAR,
             KeyCode.REWRITE,
             KeyCode.TRANSLATE,
-            KeyCode.HUMANIZE,
         )
         WriterBarPrimary.data.code shouldBe KeyCode.SUGGEST
         WriterBarTrailing.data.code shouldBe KeyCode.VOICE_INPUT
+        writerLeadingActions().map { it.data.code } shouldBe listOf(
+            KeyCode.GRAMMAR,
+            KeyCode.REWRITE,
+            KeyCode.TRANSLATE,
+            KeyCode.SUGGEST,
+        )
     }
 
-    test("writer row hides when result chips are pinned") {
+    test("writer row stays up while result chips are pinned") {
         showWriterToolsRow(
             layout = SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED,
             hasSuggestionStrip = true,
-        ) shouldBe false
+        ) shouldBe true
         showWriterToolsRow(
             layout = SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED,
             hasSuggestionStrip = false,
@@ -60,7 +65,7 @@ class WriterToolsBarTest : FunSpec({
                 pinnedWriter = false,
                 hasWordCompletions = true,
             ),
-        ) shouldBe false
+        ) shouldBe true
     }
 
     test("stitch smartbar metrics") {
@@ -68,7 +73,7 @@ class WriterToolsBarTest : FunSpec({
         WriterMenuChipHeightDp shouldBe WriterChipHeightDp
         WriterBackSizeDp shouldBe 40
         WriterChildTrackHeightDp shouldBe 42
+        WriterChipBarHeightDp shouldBe 48
         WriterSuggestionRowHeightDp shouldBe 44
-        WriterThinkingRowHeightDp shouldBe 40
     }
 })

@@ -36,6 +36,20 @@ class ComputingEvaluatorTest : FunSpec({
         DefaultComputingEvaluator.computeImageVector(data) shouldBe Icons.Default.KeyboardVoice
     }
 
+    test("shift delete and return use the preview words") {
+        DefaultComputingEvaluator.computeLabel(TextKeyData.SHIFT) shouldBe "shift"
+        DefaultComputingEvaluator.computeImageVector(TextKeyData.SHIFT) shouldBe null
+        DefaultComputingEvaluator.computeLabel(TextKeyData.DELETE) shouldBe "del"
+        DefaultComputingEvaluator.computeImageVector(TextKeyData.DELETE) shouldBe null
+        val enter = TextKeyData(
+            type = KeyType.ENTER_EDITING,
+            code = KeyCode.ENTER,
+            label = "enter",
+        )
+        DefaultComputingEvaluator.computeLabel(enter) shouldBe "return"
+        DefaultComputingEvaluator.computeImageVector(enter) shouldBe null
+    }
+
     test("draft mic shows the dictation sheet; context capture does not") {
         voiceDictationSheetVisible(presented = true, captureOnly = false) shouldBe true
         voiceDictationSheetVisible(presented = true, captureOnly = true) shouldBe false

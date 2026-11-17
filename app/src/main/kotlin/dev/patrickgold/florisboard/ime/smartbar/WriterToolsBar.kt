@@ -29,7 +29,6 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -40,7 +39,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -61,9 +59,8 @@ import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.FirstPage
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.KeyboardVoice
 import androidx.compose.material.icons.filled.LastPage
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Spellcheck
@@ -114,6 +111,8 @@ internal data class WriterBarAction(
 /** Stitch smartbar: 34dp ghost pills, 40dp back, compact selected variant. */
 internal const val WriterChipHeightDp = 34
 internal const val WriterBackSizeDp = 40
+/** Bar around the pills. Taller than the pill so the label is not clipped. */
+internal const val WriterChipBarHeightDp = 48
 /** Child chips match the tool-row pills. Overflow-panel padding must not wrap them. */
 internal const val WriterMenuChipHeightDp = WriterChipHeightDp
 /** Track around the child chips. Just tall enough for the chip and a little inset. */
@@ -141,19 +140,19 @@ internal val WriterBarTrailing = WriterBarAction(
     R.string.quick_action__voice_input,
 )
 
-/** Suggest stays while accessibility is on. Grammar, rewrite, and translate need text in the field. */
+/** Same idle row as the keyboard preview. Suggest hides when accessibility is off. */
 internal fun writerLeadingActions(
-    hasDraft: Boolean,
     suggestVisible: Boolean = true,
 ): List<WriterBarAction> {
-    val tools = if (hasDraft) WriterBarTools else emptyList()
-    return if (suggestVisible) listOf(WriterBarPrimary) + tools else tools
+    return if (suggestVisible) WriterBarTools + WriterBarPrimary else WriterBarTools
 }
 
+/** Chips stay on their own row. Word suggestions never replace them. */
+@Suppress("UNUSED_PARAMETER")
 internal fun showWriterToolsRow(
     layout: SmartbarLayout,
     hasSuggestionStrip: Boolean,
-): Boolean = layout == SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED && !hasSuggestionStrip
+): Boolean = layout == SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED
 
 /** Word completions and pinned grammar/pending share the candidate row. */
 internal fun countsAsSuggestionStrip(
@@ -205,9 +204,8 @@ internal fun WriterMicButton(
                 }
             },
     ) {
-        SnyggIcon(
-            imageVector = Icons.Default.KeyboardVoice,
-            contentDescription = stringRes(WriterBarTrailing.labelRes),
+        SnyggText(
+            text = "mic",
         )
     }
 }
@@ -218,7 +216,7 @@ internal fun WriterMoreButton(
 ) {
     WriterIconSlot(
         modifier = modifier,
-        imageVector = Icons.Default.MoreVert,
+        imageVector = Icons.Default.MoreHoriz,
         contentDescription = "more",
         onClick = {
             val ui = WriterNavStore.ui.value
@@ -418,8 +416,9 @@ private fun RowScope.PanelChip(
             color = ink,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+            maxLines = 2,
+            softWrap = true,
+            overflow = TextOverflow.Visible,
         )
     }
 }
@@ -504,7 +503,7 @@ private fun modeForWriterAction(action: WriterBarAction): String = when (action.
 }
 
 /** Space inside a pill, and between pills. Matches a roomy chip track. */
-internal val WriterChipPadH = 14.dp
+internal val WriterChipPadH = 8.dp
 internal val WriterChipGap = 10.dp
 
 @Composable
@@ -517,7 +516,6 @@ fun WriterToolsBar(
     val hasDraft = content.text.isNotBlank()
     val writerUi by WriterNavStore.ui.collectAsState()
     val edit by WriterEditStore.ui.collectAsState()
-    val chipScroll = rememberScrollState()
     LaunchedEffect(hasDraft) {
         if (hasDraft) return@LaunchedEffect
         val mode = WriterNavStore.ui.value.mode
@@ -543,9 +541,9 @@ fun WriterToolsBar(
     @Composable
     fun ToolChip(
         label: String,
-        icon: ImageVector,
         code: Int,
         onClick: () -> Unit,
+        modifier: Modifier = Modifier,
         selected: Boolean = false,
     ) {
         val inputFeedbackController = LocalInputFeedbackController.current
@@ -562,9 +560,10 @@ fun WriterToolsBar(
             elementName = elementName,
             attributes = attributes,
             selector = selector,
-            modifier = Modifier
+            modifier = modifier
+                .wrapContentWidth()
                 .height(WriterChipHeightDp.dp)
-                .clip(CircleShape),
+                .clip(RoundedCornerShape(24.dp)),
             clickAndSemanticsModifier = Modifier
                 .padding(horizontal = WriterChipPadH)
                 .indication(interactionSource, LocalIndication.current)
@@ -586,18 +585,13 @@ fun WriterToolsBar(
                     }
                 },
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+            horizontalArrangement = Arrangement.Center,
         ) {
-            SnyggIcon(
-                imageVector = icon,
-                contentDescription = null,
-                modifier = Modifier.size(14.dp),
-            )
             SnyggText(
                 elementName = "$elementName-text",
                 attributes = attributes,
                 selector = selector,
-                text = writerChipTitle(label),
+                text = label,
             )
         }
     }
@@ -609,57 +603,44 @@ fun WriterToolsBar(
     val suggestVisible = remember(inputEpoch, app) {
         app?.hostSuggestActionVisible() ?: true
     }
-    val leading = writerLeadingActions(hasDraft, suggestVisible)
+    val leading = writerLeadingActions(suggestVisible)
     SnyggBox(
         elementName = FlorisImeUi.SmartbarSharedActionsRow.elementName,
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.CenterStart,
+        allowClip = false,
     ) {
-        BoxWithConstraints(
+        Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = 3.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            val viewport = this.maxWidth
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .horizontalScroll(chipScroll),
-                horizontalArrangement = Arrangement.spacedBy(WriterChipGap),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Row(
-                    modifier = Modifier.widthIn(min = viewport),
-                    horizontalArrangement = Arrangement.spacedBy(WriterChipGap),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    leading.forEach { action ->
-                        val mode = modeForWriterAction(action)
-                        val offeringUndo = edit.flashVisible && edit.flashMode == mode
-                        ToolChip(
-                            label = if (offeringUndo) {
-                                stringRes(R.string.quick_action__undo)
-                            } else {
-                                stringRes(action.labelRes)
-                            },
-                            icon = if (offeringUndo) Icons.AutoMirrored.Filled.Undo else writerModeIcon(mode),
-                            code = action.data.code,
-                            selected = offeringUndo || (menuOpen && writerUi.mode == mode),
-                            onClick = {
-                                if (offeringUndo) {
-                                    (context.applicationContext as? FlorisApplication)
-                                        ?.onHostWriterUndoRequested()
-                                } else {
-                                    fire(action.data)
-                                }
-                            },
-                        )
-                    }
-                    WriterMicButton()
-                }
-                WriterSettingsButton()
-                WriterMoreButton()
+            leading.forEach { action ->
+                val mode = modeForWriterAction(action)
+                val offeringUndo = edit.flashVisible && edit.flashMode == mode
+                ToolChip(
+                    modifier = Modifier.weight(1f),
+                    label = if (offeringUndo) {
+                        stringRes(R.string.quick_action__undo)
+                    } else {
+                        stringRes(action.labelRes)
+                    },
+                    code = action.data.code,
+                    selected = offeringUndo || (menuOpen && writerUi.mode == mode),
+                    onClick = {
+                        if (offeringUndo) {
+                            (context.applicationContext as? FlorisApplication)
+                                ?.onHostWriterUndoRequested()
+                        } else {
+                            fire(action.data)
+                        }
+                    },
+                )
             }
+            WriterMicButton()
+            WriterMoreButton()
         }
     }
 }
@@ -776,7 +757,8 @@ private fun WriterMenuChip(
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+            softWrap = false,
+            overflow = TextOverflow.Visible,
         )
     }
 }

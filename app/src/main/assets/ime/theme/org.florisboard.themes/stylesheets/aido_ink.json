@@ -1,26 +1,26 @@
 {
   "$schema": "https://schemas.florisboard.org/snygg/v2/stylesheet",
     "@defines": {
-    "--primary": "#8AB4F8",
-    "--primary-variant": "#669DF6",
-    "--secondary": "#8AB4F8",
-    "--secondary-variant": "#669DF6",
-    "--background": "#202124",
-    "--background-variant": "#171717",
-    "--surface": "#3C4043",
-    "--surface-variant": "#5F6368",
-    "--popup-surface": "#3C4043",
-    "--focused-popup-surface": "#5F6368",
-    "--drag-marker": "#E8EAED",
+    "--primary": "#E94057",
+    "--primary-variant": "#C42E44",
+    "--secondary": "#E94057",
+    "--secondary-variant": "#C42E44",
+    "--background": "#1A1A1A",
+    "--background-variant": "#111111",
+    "--surface": "#2A2A2A",
+    "--surface-variant": "#3D3D3D",
+    "--popup-surface": "#2A2A2A",
+    "--focused-popup-surface": "#E94057",
+    "--drag-marker": "#E94057",
     "--spacer-color": "#3A3A3A",
     "--one-hand-background": "#1A1A1A",
     "--one-hand-foreground": "#FFFFFF",
     "--incognito-icon-color": "#ffffff11",
-    "--on-primary": "#202124",
-    "--on-background-disabled": "#e8eaed48",
-    "--on-background": "#E8EAED",
-    "--on-surface": "#E8EAED",
-    "--on-surface-variant": "#BDC1C6",
+    "--on-primary": "#FFFFFF",
+    "--on-background-disabled": "#dcdcdc48",
+    "--on-background": "#FFFFFF",
+    "--on-surface": "#FFFFFF",
+    "--on-surface-variant": "#B0B0B0",
 
     "--shape": "rounded-corner(12dp, 12dp, 12dp, 12dp)",
     "--shape-variant": "rounded-corner(12dp, 12dp, 12dp, 12dp)",
@@ -65,43 +65,54 @@
   "key": {
     "background": "var(--surface)",
     "foreground": "var(--on-surface)",
-    "font-size": "22sp",
+    "font-size": "18sp",
     "font-weight": "normal",
     "shape": "rounded-corner(12dp, 12dp, 12dp, 12dp)",
-    "shadow-elevation": "1dp",
-    "margin": "3dp",
-    "text-max-lines": "1"
+    "margin": "2dp",
+    "clip": "no",
+    "text-max-lines": "1",
+    "text-overflow": "visible"
+  },
+  "key[mode=`SYMBOLS`]": {
+    "font-size": "16sp",
+    "clip": "no",
+    "text-overflow": "visible"
+  },
+  "key[mode=`SYMBOLS2`]": {
+    "font-size": "16sp",
+    "clip": "no",
+    "text-overflow": "visible"
   },
   "key:pressed": {
-    "background": "var(--surface-variant)",
-    "foreground": "var(--on-surface)"
+    "background": "var(--primary)",
+    "foreground": "#FFFFFF"
   },
   "key[code=10]": {
     "background": "var(--primary)",
     "foreground": "var(--on-primary)",
-    "font-size": "16sp",
-    "font-weight": "normal",
-    "margin": "3dp"
+    "font-size": "13sp",
+    "font-weight": "bold",
+    "margin": "4dp 6dp"
   },
   "key[code=10]:pressed": {
-    "background": "var(--primary-variant)",
-    "foreground": "var(--on-primary)"
+    "background": "var(--primary)",
+    "foreground": "#FFFFFF"
   },
   "key[code=32]": {
     "background": "var(--surface)",
-    "foreground": "var(--on-surface-variant)",
-    "font-size": "14sp",
-    "font-weight": "normal",
-    "margin": "3dp",
-    "shape": "rounded-corner(24dp, 24dp, 24dp, 24dp)",
+    "foreground": "#FFFFFF",
+    "font-size": "13sp",
+    "font-weight": "bold",
+    "margin": "4dp 6dp",
     "text-overflow": "ellipsis"
   },
   "key[code=32]:pressed": {
-    "background": "var(--surface-variant)",
-    "foreground": "var(--on-surface)"
+    "background": "var(--primary)",
+    "foreground": "#FFFFFF"
   },
   "key[code=-201,-202,-203]": {
-    "font-size": "18sp"
+    "font-size": "13sp",
+    "font-weight": "bold"
   },
   "key[code=-204,-205]": {
     "font-size": "12sp"
@@ -114,23 +125,36 @@
     "foreground": "var(--on-surface-variant)"
   },
   "key[code=-11]": {
-    "font-size": "18sp"
+    "background": "var(--surface)",
+    "foreground": "var(--on-surface)",
+    "font-size": "13sp",
+    "font-weight": "bold"
   },
   "key[code=-11]:pressed": {
-    "background": "var(--surface-variant)",
-    "foreground": "var(--on-surface)"
+    "background": "var(--primary)",
+    "foreground": "#FFFFFF"
   },
   "key[code=-11][shiftstate=`caps_lock`]": {
-    "background": "#E8EAED",
-    "foreground": "#202124"
+    "background": "var(--primary)",
+    "foreground": "#FFFFFF"
+  },
+  "key[code=-7]": {
+    "font-size": "13sp",
+    "font-weight": "bold"
+  },
+  "key[code=-202]": {
+    "font-size": "13sp",
+    "font-weight": "bold"
   },
   "key-hint": {
     "background": "transparent",
     "foreground": "var(--on-surface-variant)",
-    "font-size": "12sp",
+    "font-size": "11sp",
     "font-family": "monospace",
-    "padding": "0dp 1dp 1dp 0dp",
-    "text-max-lines": "1"
+    "padding": "3dp 2dp 4dp 1dp",
+    "clip": "no",
+    "text-max-lines": "1",
+    "text-overflow": "visible"
   },
   "key-popup-box": {
     "background": "var(--popup-surface)",
@@ -140,6 +164,12 @@
     "border-color": "#4A4A4A",
     "border-width": "1dp",
     "shadow-elevation": "0dp"
+  },
+  "key-popup-element": {
+    "font-size": "18sp",
+    "clip": "no",
+    "text-max-lines": "1",
+    "text-overflow": "visible"
   },
   "key-popup-element:focus": {
     "background": "var(--focused-popup-surface)",
@@ -172,109 +202,25 @@
     "shape": "circle()"
   },
   "smartbar-action-key": {
-    "background": "transparent",
-    "foreground": "var(--on-background)",
-    "shape": "var(--shape)"
+    "background": "#292524",
+    "foreground": "#D6D3D1",
+    "border-color": "#44403C",
+    "border-width": "1dp",
+    "font-size": "13sp",
+    "font-weight": "bold",
+    "shape": "rounded-corner(24dp, 24dp, 24dp, 24dp)"
   },
   "smartbar-action-key:pressed": {
-    "background": "var(--surface-variant)",
-    "foreground": "var(--on-surface)"
+    "background": "#3A463C",
+    "foreground": "#FDFCF8"
+  },
+  "smartbar-action-key:focus": {
+    "background": "#3A463C",
+    "foreground": "#FDFCF8"
   },
   "smartbar-action-key:disabled": {
     "foreground": "var(--on-background-disabled)"
   },
-  "smartbar-action-key[code=-302]": {
-    "background": "#FFFFFF",
-    "foreground": "#202124",
-    "font-size": "12sp",
-    "font-weight": "bold",
-    "padding": "10dp 0dp",
-    "shape": "var(--shape-chip)",
-    "text-max-lines": "1"
-  },
-  "smartbar-action-key[code=-302]:pressed": {
-    "background": "#E8EAED",
-    "foreground": "#202124",
-    "text-max-lines": "1"
-  },
-
-  "smartbar-action-key[code=-303]": {
-    "background": "var(--surface)",
-    "foreground": "var(--on-surface)",
-    "border-color": "var(--surface-variant)",
-    "border-width": "1dp",
-    "font-size": "12sp",
-    "padding": "10dp 0dp",
-    "shape": "var(--shape-chip)",
-    "text-max-lines": "1"
-  },
-  "smartbar-action-key[code=-303]:pressed": {
-    "background": "var(--surface-variant)",
-    "foreground": "var(--on-surface)",
-    "text-max-lines": "1"
-  },
-  "smartbar-action-key[code=-304]": {
-    "background": "var(--surface)",
-    "foreground": "var(--on-surface)",
-    "border-color": "var(--surface-variant)",
-    "border-width": "1dp",
-    "font-size": "12sp",
-    "padding": "10dp 0dp",
-    "shape": "var(--shape-chip)",
-    "text-max-lines": "1"
-  },
-  "smartbar-action-key[code=-304]:pressed": {
-    "background": "var(--surface-variant)",
-    "foreground": "var(--on-surface)",
-    "text-max-lines": "1"
-  },
-  "smartbar-action-key[code=-305]": {
-    "background": "var(--surface)",
-    "foreground": "var(--on-surface)",
-    "border-color": "var(--surface-variant)",
-    "border-width": "1dp",
-    "font-size": "12sp",
-    "padding": "10dp 0dp",
-    "shape": "var(--shape-chip)",
-    "text-max-lines": "1"
-  },
-  "smartbar-action-key[code=-305]:pressed": {
-    "background": "var(--surface-variant)",
-    "foreground": "var(--on-surface)",
-    "text-max-lines": "1"
-  },
-  "smartbar-action-key[code=-306]": {
-    "background": "var(--surface)",
-    "foreground": "var(--on-surface)",
-    "border-color": "var(--surface-variant)",
-    "border-width": "1dp",
-    "font-size": "12sp",
-    "padding": "10dp 0dp",
-    "shape": "var(--shape-chip)",
-    "text-max-lines": "1"
-  },
-  "smartbar-action-key[code=-306]:pressed": {
-    "background": "var(--surface-variant)",
-    "foreground": "var(--on-surface)",
-    "text-max-lines": "1"
-  },
-  "smartbar-action-key[code=-307]": {
-    "background": "var(--surface)",
-    "foreground": "var(--on-surface)",
-    "border-color": "var(--surface-variant)",
-    "border-width": "1dp",
-    "font-size": "12sp",
-    "padding": "10dp 0dp",
-    "shape": "var(--shape-chip)",
-    "text-max-lines": "1"
-  },
-  "smartbar-action-key[code=-307]:pressed": {
-    "background": "var(--surface-variant)",
-    "foreground": "var(--on-surface)",
-    "text-max-lines": "1"
-  },
-
-
   "smartbar-actions-overflow": {
     "background": "var(--background)",
     "margin": "0dp",
@@ -357,22 +303,22 @@
     "foreground": "var(--on-background)",
     "border-color": "var(--on-surface-variant)",
     "border-width": "1dp",
-    "font-size": "13sp",
+    "font-size": "14sp",
     "font-weight": "bold",
-    "margin": "4dp",
-    "padding": "8dp 14dp",
+    "margin": "4dp 2dp",
+    "padding": "12dp 4dp",
     "shape": "var(--shape-chip)",
     "text-max-lines": "1",
-    "text-overflow": "ellipsis"
+    "text-overflow": "visible"
   },
   "smartbar-candidate-word[rank=0]": {
-    "background": "#FFFFFF",
-    "foreground": "#202124",
+    "background": "#FDE8EB",
+    "foreground": "#1A1A1A",
     "border-width": "0dp"
   },
   "smartbar-candidate-word:pressed": {
-    "background": "#E8EAED",
-    "foreground": "#202124"
+    "background": "var(--primary)",
+    "foreground": "#FFFFFF"
   },
   "smartbar-candidate-word-secondary-text": {
     "font-size": "8sp",
@@ -540,7 +486,7 @@
   },
   "extracted-landscape-input-action": {
     "background": "var(--primary)",
-    "foreground": "var(--on-primary)",
+    "foreground": "var(--on-surface)",
     "shape": "rounded-corner(4dp, 4dp, 4dp, 4dp)"
   },
 
@@ -568,8 +514,8 @@
     "shape": "var(--shape)"
   },
   "media-emoji-key:pressed": {
-    "background": "var(--surface-variant)",
-    "foreground": "var(--on-surface)"
+    "background": "var(--primary)",
+    "foreground": "#FFFFFF"
   },
   "media-emoji-key-popup-box": {
     "background": "var(--popup-surface)",

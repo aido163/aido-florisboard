@@ -18,15 +18,11 @@ package dev.patrickgold.florisboard.ime.keyboard
 
 import android.content.Context
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowRightAlt
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.filled.KeyboardReturn
 import androidx.compose.material.icons.automirrored.filled.Redo
-import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.automirrored.outlined.Assignment
-import androidx.compose.material.icons.automirrored.outlined.Backspace
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Close
@@ -36,16 +32,13 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ContentCut
 import androidx.compose.material.icons.filled.ContentPasteGo
 import androidx.compose.material.icons.filled.DeleteSweep
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.FontDownload
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.KeyboardCapslock
 import androidx.compose.material.icons.filled.KeyboardHide
 import androidx.compose.material.icons.filled.KeyboardVoice
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.MoreHoriz
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.SentimentSatisfiedAlt
 import androidx.compose.material.icons.filled.Settings
@@ -201,8 +194,30 @@ fun ComputingEvaluator.computeLabel(data: KeyData): String? {
             KeyCode.HUMANIZE -> {
                 evaluator.context()?.getString(R.string.quick_action__humanize)
             }
+            KeyCode.SHIFT -> {
+                if (evaluator.state.inputShiftState == InputShiftState.CAPS_LOCK) "caps" else "shift"
+            }
+            KeyCode.DELETE -> "del"
+            KeyCode.ENTER -> enterWord(evaluator)
             else -> null
         }
+    }
+}
+
+/** Word on the return key. Matches the preview: "return", or the editor action. */
+private fun enterWord(evaluator: ComputingEvaluator): String {
+    val imeOptions = evaluator.editorInfo.imeOptions
+    val inputAttributes = evaluator.editorInfo.inputAttributes
+    if (imeOptions.flagNoEnterAction || inputAttributes.flagTextMultiLine) {
+        return "return"
+    }
+    return when (imeOptions.action) {
+        ImeOptions.Action.DONE -> "done"
+        ImeOptions.Action.GO -> "go"
+        ImeOptions.Action.NEXT -> "next"
+        ImeOptions.Action.SEARCH -> "search"
+        ImeOptions.Action.SEND -> "send"
+        else -> "return"
     }
 }
 
@@ -259,27 +274,8 @@ fun ComputingEvaluator.computeImageVector(data: KeyData): ImageVector? {
         KeyCode.IME_HIDE_UI -> {
             Icons.Default.KeyboardHide
         }
-        KeyCode.DELETE -> {
-            Icons.AutoMirrored.Outlined.Backspace
-        }
-        KeyCode.ENTER -> {
-            val imeOptions = evaluator.editorInfo.imeOptions
-            val inputAttributes = evaluator.editorInfo.inputAttributes
-            if (imeOptions.flagNoEnterAction || inputAttributes.flagTextMultiLine) {
-                Icons.AutoMirrored.Filled.KeyboardReturn
-            } else {
-                when (imeOptions.action) {
-                    ImeOptions.Action.DONE -> Icons.Default.Done
-                    ImeOptions.Action.GO -> Icons.AutoMirrored.Filled.ArrowRightAlt
-                    ImeOptions.Action.NEXT -> Icons.AutoMirrored.Filled.ArrowRightAlt
-                    ImeOptions.Action.NONE -> Icons.AutoMirrored.Filled.KeyboardReturn
-                    ImeOptions.Action.PREVIOUS -> Icons.AutoMirrored.Filled.ArrowRightAlt
-                    ImeOptions.Action.SEARCH -> Icons.Default.Search
-                    ImeOptions.Action.SEND -> Icons.AutoMirrored.Filled.Send
-                    ImeOptions.Action.UNSPECIFIED -> Icons.AutoMirrored.Filled.KeyboardReturn
-                }
-            }
-        }
+        KeyCode.DELETE -> null
+        KeyCode.ENTER -> null
         KeyCode.FORWARD_DELETE -> {
             Icons.AutoMirrored.Default.ForwardDelete
         }
@@ -313,12 +309,7 @@ fun ComputingEvaluator.computeImageVector(data: KeyData): ImageVector? {
         KeyCode.HUMANIZE -> {
             Icons.Default.Chat
         }
-        KeyCode.SHIFT -> {
-            when (evaluator.state.inputShiftState != InputShiftState.UNSHIFTED) {
-                true -> Icons.Default.KeyboardCapslock
-                else -> Icons.Default.KeyboardArrowUp
-            }
-        }
+        KeyCode.SHIFT -> null
         KeyCode.SPACE, KeyCode.CJK_SPACE -> {
             when (evaluator.keyboard.mode) {
                 KeyboardMode.NUMERIC,
