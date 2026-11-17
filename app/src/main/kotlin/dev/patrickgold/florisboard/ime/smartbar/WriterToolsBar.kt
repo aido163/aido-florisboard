@@ -60,6 +60,7 @@ import androidx.compose.material.icons.filled.FirstPage
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.LastPage
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material.icons.filled.Settings
@@ -111,7 +112,7 @@ internal data class WriterBarAction(
 /** Stitch smartbar: 34dp ghost pills, 40dp back, compact selected variant. */
 internal const val WriterChipHeightDp = 34
 internal const val WriterBackSizeDp = 40
-/** Bar around the pills. Taller than the pill so the label is not clipped. */
+/** Bar around the pills. Even air above and below the 34dp chips. */
 internal const val WriterChipBarHeightDp = 48
 /** Child chips match the tool-row pills. Overflow-panel padding must not wrap them. */
 internal const val WriterMenuChipHeightDp = WriterChipHeightDp
@@ -147,12 +148,31 @@ internal fun writerLeadingActions(
     return if (suggestVisible) WriterBarTools + WriterBarPrimary else WriterBarTools
 }
 
-/** Chips stay on their own row. Word suggestions never replace them. */
+/** The tool chips own the bar when a word is not being typed. */
 @Suppress("UNUSED_PARAMETER")
 internal fun showWriterToolsRow(
     layout: SmartbarLayout,
     hasSuggestionStrip: Boolean,
 ): Boolean = layout == SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED
+
+/**
+ * Word suggestions take the tool-chip slot while a word is in progress.
+ * A finished word, and a bar with no matches, returns the suggest and rewrite chips.
+ */
+internal fun smartbarShowsWordSuggestions(
+    blocked: Boolean,
+    typingWord: Boolean,
+    hasWordSuggestions: Boolean,
+    pinnedWriter: Boolean,
+): Boolean {
+    if (blocked) return false
+    if (pinnedWriter) return true
+    return typingWord && hasWordSuggestions
+}
+
+internal fun typingWord(composing: CharSequence, currentWord: CharSequence): Boolean {
+    return composing.any { it.isLetter() } || currentWord.any { it.isLetter() }
+}
 
 /** Word completions and pinned grammar/pending share the candidate row. */
 internal fun countsAsSuggestionStrip(
@@ -204,8 +224,9 @@ internal fun WriterMicButton(
                 }
             },
     ) {
-        SnyggText(
-            text = "mic",
+        SnyggIcon(
+            imageVector = Icons.Filled.Mic,
+            contentDescription = "Voice",
         )
     }
 }
@@ -391,7 +412,7 @@ private fun RowScope.PanelChip(
         modifier = Modifier
             .weight(1f)
             .fillMaxHeight()
-            .clip(RoundedCornerShape(4.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(fill)
             .clickable(
                 interactionSource = interactionSource,
@@ -561,7 +582,6 @@ fun WriterToolsBar(
             attributes = attributes,
             selector = selector,
             modifier = modifier
-                .wrapContentWidth()
                 .height(WriterChipHeightDp.dp)
                 .clip(RoundedCornerShape(24.dp)),
             clickAndSemanticsModifier = Modifier
@@ -613,8 +633,8 @@ fun WriterToolsBar(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 3.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                .padding(horizontal = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             leading.forEach { action ->

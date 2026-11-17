@@ -23,7 +23,6 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
@@ -58,6 +57,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import dev.patrickgold.florisboard.R
+import dev.patrickgold.florisboard.editorInstance
 import dev.patrickgold.florisboard.app.FlorisPreferenceStore
 import dev.patrickgold.florisboard.ime.keyboard.FlorisImeSizing
 import dev.patrickgold.florisboard.ime.nlp.NlpInlineAutofill
@@ -321,28 +321,38 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
     }
 
     val candidates by nlpManager.activeCandidatesFlow.collectAsState()
+    val editorInstance by context.editorInstance()
+    val content by editorInstance.activeContentFlow.collectAsState()
     val writerUi by WriterNavStore.ui.collectAsState()
     val edit by WriterEditStore.ui.collectAsState()
     val undoOnChip = edit.flashVisible && edit.flashMode.isNotEmpty()
-    val showingSuggestionStrip = !undoOnChip && !writerUi.nestedOpen && candidates.any {
-        nlpManager.isPinnedPending(it) ||
-            nlpManager.isPinnedGrammar(it) ||
-            it is WordSuggestionCandidate
+    val pinnedWriter = candidates.any {
+        nlpManager.isPinnedPending(it) || nlpManager.isPinnedGrammar(it)
     }
+    val showWords = smartbarShowsWordSuggestions(
+        blocked = undoOnChip || writerUi.nestedOpen,
+        typingWord = typingWord(content.composingText, content.currentWordText),
+        hasWordSuggestions = candidates.any { it is WordSuggestionCandidate },
+        pinnedWriter = pinnedWriter,
+    )
     val showWriterBar = undoOnChip || writerUi.nestedOpen || showWriterToolsRow(
         layout = smartbarLayout,
-        hasSuggestionStrip = showingSuggestionStrip,
+        hasSuggestionStrip = showWords,
     )
 
-    if (showWriterBar || showingSuggestionStrip && smartbarLayout == SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED) {
+    if ((showWriterBar || showWords) && smartbarLayout == SmartbarLayout.SUGGESTIONS_ACTIONS_SHARED) {
         Column(
-            modifier = modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp, bottom = 8.dp),
         ) {
-            if (showingSuggestionStrip) {
-                WordSuggestionBar()
-            }
-            if (showWriterBar) {
+            if (showWords) {
+                WordSuggestionBar(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(WriterChipBarHeightDp.dp),
+                )
+            } else {
                 WriterToolsBar(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -353,7 +363,7 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
         return
     }
 
-    if (showingSuggestionStrip) {
+    if (showWords) {
         SnyggRow(
             modifier = modifier
                 .fillMaxWidth()
@@ -429,7 +439,11 @@ private fun SmartbarMainRow(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun WordSuggestionBar() {
+private fun WordSuggestionBar(
+    modifier: Modifier = Modifier
+        .fillMaxWidth()
+        .height(WriterSuggestionRowHeightDp.dp),
+) {
     val context = LocalContext.current
     val nlpManager by context.nlpManager()
     val candidates by nlpManager.activeCandidatesFlow.collectAsState()
@@ -438,9 +452,7 @@ private fun WordSuggestionBar() {
     }
     SnyggRow(
         elementName = FlorisImeUi.SmartbarCandidatesRow.elementName,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(WriterSuggestionRowHeightDp.dp),
+        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (pinned) {

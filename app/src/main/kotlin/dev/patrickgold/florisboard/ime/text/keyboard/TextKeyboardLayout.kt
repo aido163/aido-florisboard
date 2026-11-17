@@ -232,10 +232,7 @@ fun TextKeyboardLayout(
                         KeyboardMode.CHARACTERS,
                         KeyboardMode.NUMERIC_ADVANCED,
                         KeyboardMode.SYMBOLS,
-                        KeyboardMode.SYMBOLS2 -> {
-                            (keyboardHeight / keyboard.rowCount)
-                                .coerceAtMost(keyboardRowBaseHeight.toPx() * 1.12f)
-                        }
+                        KeyboardMode.SYMBOLS2 -> keyboardHeight / keyboard.rowCount
                         else -> keyboardRowBaseHeight.toPx()
                     }
                 }

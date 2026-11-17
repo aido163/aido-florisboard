@@ -51,6 +51,7 @@ import kotlin.properties.Delegates
 
 private const val BLANK_STR_PATTERN = "^\\s*$"
 
+
 class NlpManager(context: Context) {
     private val blankStrRegex = Regex(BLANK_STR_PATTERN)
 
@@ -226,13 +227,13 @@ class NlpManager(context: Context) {
                     )
                 }
             }
+            val next = buildList {
+                addAll(emojiSuggestions)
+                addAll(suggestions)
+            }
             internalSuggestionsGuard.withLock {
-                if (internalSuggestions.first < reqTime) {
-                    internalSuggestions = reqTime to buildList {
-                        addAll(emojiSuggestions)
-                        addAll(suggestions)
-                    }
-                }
+                if (internalSuggestions.first >= reqTime) return@withLock
+                internalSuggestions = reqTime to next
             }
         }
     }

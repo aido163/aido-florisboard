@@ -55,6 +55,29 @@ class WriterToolsBarTest : FunSpec({
         ) shouldBe true
     }
 
+    test("word suggestions replace the chips only while a word is open") {
+        smartbarShowsWordSuggestions(
+            blocked = false,
+            typingWord = true,
+            hasWordSuggestions = true,
+            pinnedWriter = false,
+        ) shouldBe true
+        smartbarShowsWordSuggestions(
+            blocked = false,
+            typingWord = false,
+            hasWordSuggestions = true,
+            pinnedWriter = false,
+        ) shouldBe false
+        smartbarShowsWordSuggestions(
+            blocked = false,
+            typingWord = true,
+            hasWordSuggestions = false,
+            pinnedWriter = false,
+        ) shouldBe false
+        typingWord("hel", "") shouldBe true
+        typingWord("", " ") shouldBe false
+    }
+
     test("word completions count as the suggestion strip") {
         countsAsSuggestionStrip(pinnedWriter = false, hasWordCompletions = true) shouldBe true
         countsAsSuggestionStrip(pinnedWriter = true, hasWordCompletions = false) shouldBe true

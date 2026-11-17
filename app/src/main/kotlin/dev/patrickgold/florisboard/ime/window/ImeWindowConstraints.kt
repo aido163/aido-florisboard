@@ -147,8 +147,8 @@ sealed class ImeWindowConstraints(rootInsets: ImeInsets.Root) {
                 ImeFormFactor.Type.LARGE_TABLET -> 6.dp
                 ImeFormFactor.Type.TABLET_LANDSCAPE -> 2.dp
                 ImeFormFactor.Type.TABLET_PORTRAIT -> 5.dp
-                ImeFormFactor.Type.PHONE_LANDSCAPE -> 2.dp
-                ImeFormFactor.Type.PHONE_PORTRAIT -> 2.dp
+                ImeFormFactor.Type.PHONE_LANDSCAPE,
+                ImeFormFactor.Type.PHONE_PORTRAIT -> 1.dp
             }
         }
         override val defKeyMarginV by calculation {
@@ -157,8 +157,9 @@ sealed class ImeWindowConstraints(rootInsets: ImeInsets.Root) {
                 ImeFormFactor.Type.LARGE_TABLET -> 6.dp
                 ImeFormFactor.Type.TABLET_LANDSCAPE -> 5.dp
                 ImeFormFactor.Type.TABLET_PORTRAIT -> 5.dp
-                ImeFormFactor.Type.PHONE_LANDSCAPE -> 5.dp
-                ImeFormFactor.Type.PHONE_PORTRAIT -> 5.dp
+                // Same 1dp gutter as the columns, so letter cards sit close.
+                ImeFormFactor.Type.PHONE_LANDSCAPE,
+                ImeFormFactor.Type.PHONE_PORTRAIT -> 1.dp
             }
         }
 
